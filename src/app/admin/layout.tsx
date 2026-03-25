@@ -19,6 +19,9 @@ export default function AdminLayout({
           <Link href="/admin/sources" className="text-sm text-gray-600 hover:text-black">
             Sources
           </Link>
+          <Link href="/admin/settings" className="text-sm text-gray-600 hover:text-black">
+            Settings
+          </Link>
           <Link href="/" className="ml-auto text-sm text-gray-400 hover:text-black">
             View Feed
           </Link>
