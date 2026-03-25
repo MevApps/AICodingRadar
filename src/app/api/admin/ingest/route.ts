@@ -4,6 +4,7 @@ import { sources, ingestionRuns } from "@/lib/db/schema";
 import { eq, gte, sql } from "drizzle-orm";
 import { processSource } from "@/lib/ingestion/pipeline";
 import { RunTracker } from "@/lib/ingestion/tracker";
+import { PipelineLogger } from "@/lib/ingestion/logger";
 
 export async function POST() {
   // Concurrency guard
@@ -53,6 +54,7 @@ export async function POST() {
 
 async function executeIngestion(runId: string) {
   const tracker = new RunTracker();
+  const logger = new PipelineLogger();
   let sourcesProcessed = 0;
   let totalCrawled = 0;
   let totalRelevant = 0;
@@ -68,6 +70,7 @@ async function executeIngestion(runId: string) {
 
     for (const source of enabledSources) {
       try {
+        logger.startSource(source.id, source.name);
         const result = await processSource(
           {
             id: source.id,
@@ -76,7 +79,8 @@ async function executeIngestion(runId: string) {
             name: source.name,
             relevanceThreshold: source.relevanceThreshold,
           },
-          tracker
+          tracker,
+          logger
         );
 
         sourcesProcessed++;
@@ -131,6 +135,7 @@ async function executeIngestion(runId: string) {
         tokensInput: usage.inputTokens,
         tokensOutput: usage.outputTokens,
         costUsd: usage.costUsd,
+        perSourceResults: logger.getSourceResults(),
       })
       .where(eq(ingestionRuns.id, runId));
   } catch (error) {

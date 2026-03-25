@@ -4,6 +4,7 @@ import { sources, ingestionRuns } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { processSource } from "@/lib/ingestion/pipeline";
 import { RunTracker } from "@/lib/ingestion/tracker";
+import { PipelineLogger } from "@/lib/ingestion/logger";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
     .returning();
 
   const tracker = new RunTracker();
+  const logger = new PipelineLogger();
   const enabledSources = await db
     .select()
     .from(sources)
@@ -31,6 +33,7 @@ export async function GET(request: NextRequest) {
 
   for (const source of enabledSources) {
     try {
+      logger.startSource(source.id, source.name);
       const result = await processSource(
         {
           id: source.id,
@@ -39,7 +42,8 @@ export async function GET(request: NextRequest) {
           name: source.name,
           relevanceThreshold: source.relevanceThreshold,
         },
-        tracker
+        tracker,
+        logger
       );
 
       sourcesProcessed++;
@@ -78,6 +82,7 @@ export async function GET(request: NextRequest) {
       tokensInput: usage.inputTokens,
       tokensOutput: usage.outputTokens,
       costUsd: usage.costUsd,
+      perSourceResults: logger.getSourceResults(),
     })
     .where(eq(ingestionRuns.id, run.id));
 

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { rawItems, entries, entrySupersessions, sources } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { RunTracker } from "./tracker";
+import { PipelineLogger } from "./logger";
 import { RssCrawler } from "./crawlers/rss";
 import { GitHubCrawler } from "./crawlers/github";
 import { RedditCrawler } from "./crawlers/reddit";
@@ -45,14 +46,26 @@ function getCrawler(type: SourceType): Crawler {
   }
 }
 
-export async function processSource(source: SourceInput, tracker?: RunTracker): Promise<PipelineResult> {
+export async function processSource(
+  source: SourceInput,
+  tracker?: RunTracker,
+  logger?: PipelineLogger
+): Promise<PipelineResult> {
   const result: PipelineResult = { crawled: 0, relevant: 0, structured: 0, supersessionsFound: 0, errors: [] };
+
+  const relevanceScores: number[] = [];
+  let supersessionChecks = 0;
 
   // 1. Crawl
   const crawler = getCrawler(source.type);
   const crawlResult = await crawler.crawl(source.url);
   result.crawled = crawlResult.items.length;
   result.errors.push(...crawlResult.errors);
+
+  logger?.recordCrawl(source.id, {
+    itemsFound: crawlResult.items.length,
+    errors: crawlResult.errors,
+  });
 
   // 2. Deduplicate by URL and store raw items
   for (const item of crawlResult.items) {
@@ -80,6 +93,8 @@ export async function processSource(source: SourceInput, tracker?: RunTracker): 
         .update(rawItems)
         .set({ relevanceScore: relevance.score })
         .where(eq(rawItems.id, inserted[0].id));
+
+      relevanceScores.push(relevance.score);
 
       if (relevance.score < source.relevanceThreshold) continue;
       result.relevant++;
@@ -124,6 +139,7 @@ export async function processSource(source: SourceInput, tracker?: RunTracker): 
       );
 
       for (const candidate of candidates) {
+        supersessionChecks++;
         const existing = activeEntries.find((e) => e.id === candidate.id)!;
         const supersessionResult = await checkSupersession(
           { title: structured.title, body: structured.body },
@@ -155,6 +171,20 @@ export async function processSource(source: SourceInput, tracker?: RunTracker): 
       );
     }
   }
+
+  logger?.recordRelevance(source.id, {
+    itemsScored: result.crawled,
+    itemsPassed: result.relevant,
+    scores: relevanceScores,
+  });
+  logger?.recordStructuring(source.id, {
+    itemsStructured: result.structured,
+    errors: result.errors.filter((e) => e.includes("structur")),
+  });
+  logger?.recordSupersession(source.id, {
+    checked: supersessionChecks,
+    found: result.supersessionsFound,
+  });
 
   return result;
 }
