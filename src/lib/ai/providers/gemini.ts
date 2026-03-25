@@ -53,7 +53,11 @@ export class GeminiProvider implements AIProvider {
       const model = this.genAI.getGenerativeModel({ model: this.model });
       await model.generateContent("hi");
       return true;
-    } catch { return false; }
+    } catch (error: any) {
+      // 429 = quota exceeded, but the key itself is valid
+      if (error?.status === 429) return true;
+      return false;
+    }
   }
 
   getInputPrice(): number { return PRICING.gemini.input; }
