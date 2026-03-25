@@ -109,3 +109,35 @@ export const rawItems = pgTable(
     index("raw_items_source_idx").on(table.sourceId),
   ]
 );
+
+export const runStatusEnum = pgEnum("run_status", [
+  "running", "completed", "failed",
+]);
+
+export const triggeredByEnum = pgEnum("triggered_by", [
+  "cron", "manual",
+]);
+
+export const ingestionRuns = pgTable(
+  "ingestion_runs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    startedAt: timestamp("started_at").defaultNow().notNull(),
+    completedAt: timestamp("completed_at"),
+    status: runStatusEnum("status").notNull().default("running"),
+    sourcesProcessed: integer("sources_processed").notNull().default(0),
+    itemsCrawled: integer("items_crawled").notNull().default(0),
+    itemsRelevant: integer("items_relevant").notNull().default(0),
+    itemsStructured: integer("items_structured").notNull().default(0),
+    supersessionsFound: integer("supersessions_found").notNull().default(0),
+    errors: text("errors").array().notNull().default([]),
+    tokensInput: integer("tokens_input").notNull().default(0),
+    tokensOutput: integer("tokens_output").notNull().default(0),
+    costUsd: real("cost_usd").notNull().default(0),
+    triggeredBy: triggeredByEnum("triggered_by").notNull(),
+  },
+  (table) => [
+    index("ingestion_runs_started_at_idx").on(table.startedAt),
+    index("ingestion_runs_status_idx").on(table.status),
+  ]
+);

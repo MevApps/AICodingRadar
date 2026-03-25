@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { entries, sources, entrySupersessions } from "@/lib/db/schema";
+import { entries, sources, entrySupersessions, ingestionRuns } from "@/lib/db/schema";
 
 describe("entries schema", () => {
   it("has required columns", () => {
@@ -38,5 +38,25 @@ describe("entrySupersessions schema", () => {
     const columns = Object.keys(entrySupersessions);
     expect(columns).toContain("supersedingEntryId");
     expect(columns).toContain("supersededEntryId");
+  });
+});
+
+describe("ingestionRuns schema", () => {
+  it("has required columns", () => {
+    const columns = Object.keys(ingestionRuns);
+    expect(columns).toContain("id");
+    expect(columns).toContain("startedAt");
+    expect(columns).toContain("completedAt");
+    expect(columns).toContain("status");
+    expect(columns).toContain("sourcesProcessed");
+    expect(columns).toContain("itemsCrawled");
+    expect(columns).toContain("itemsRelevant");
+    expect(columns).toContain("itemsStructured");
+    expect(columns).toContain("supersessionsFound");
+    expect(columns).toContain("errors");
+    expect(columns).toContain("tokensInput");
+    expect(columns).toContain("tokensOutput");
+    expect(columns).toContain("costUsd");
+    expect(columns).toContain("triggeredBy");
   });
 });
