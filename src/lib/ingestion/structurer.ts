@@ -1,0 +1,34 @@
+import { getAnthropicClient } from "@/lib/ai/client";
+import { STRUCTURER_PROMPT } from "@/lib/ai/prompts";
+import type { EntryType } from "@/types";
+
+interface StructuredEntry {
+  type: EntryType;
+  title: string;
+  summary: string;
+  body: string;
+  tools: string[];
+  categories: string[];
+}
+
+export async function structureEntry(item: {
+  title: string;
+  content: string;
+}): Promise<StructuredEntry> {
+  const client = getAnthropicClient();
+
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 2048,
+    system: STRUCTURER_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: `Title: ${item.title}\n\nContent: ${item.content}`,
+      },
+    ],
+  });
+
+  const text = response.content[0].type === "text" ? response.content[0].text : "";
+  return JSON.parse(text);
+}
