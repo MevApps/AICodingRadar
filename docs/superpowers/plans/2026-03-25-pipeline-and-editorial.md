@@ -19,10 +19,12 @@
 | File | Responsibility |
 |------|---------------|
 | `src/lib/ingestion/logger.ts` | Per-source, per-stage structured logging for pipeline runs |
+| `src/lib/utils/json.ts` | Shared `extractJson` helper for robust AI response parsing |
 | `src/lib/ingestion/dedup.ts` | Semantic deduplication via cosine similarity on embeddings |
 | `src/app/api/admin/entries/[id]/edit/route.ts` | API route: edit entry fields before approving |
 | `src/components/admin/queue-item-editor.tsx` | Inline edit form for draft entries in review queue |
 | `tests/lib/ingestion/logger.test.ts` | Tests for structured logger |
+| `tests/lib/utils/json.test.ts` | Tests for `extractJson` helper |
 | `tests/lib/ingestion/dedup.test.ts` | Tests for semantic deduplication |
 | `tests/lib/ingestion/prompts-validation.test.ts` | Tests validating prompt output structure |
 | `tests/api/admin/entries-edit.test.ts` | Tests for entry edit API route |
@@ -34,15 +36,14 @@
 | `src/lib/db/schema.ts` | Add `editedFields` JSONB column to `entries` table; add `perSourceResults` JSONB column to `ingestionRuns` table |
 | `src/lib/ingestion/pipeline.ts` | Integrate structured logger; add semantic dedup check before creating entries; return per-source results |
 | `src/lib/ai/prompts.ts` | Improve `RELEVANCE_FILTER_PROMPT` and `STRUCTURER_PROMPT` for higher editorial quality |
-| `src/lib/ingestion/relevance-filter.ts` | Add JSON parse error handling with retry; validate score is 0.0-1.0 |
-| `src/lib/ingestion/structurer.ts` | Add JSON parse error handling with retry; validate output fields |
-| `src/lib/ingestion/supersession.ts` | Add JSON parse error handling with retry |
+| `src/lib/ingestion/relevance-filter.ts` | Use `extractJson` from utils, add score validation |
+| `src/lib/ingestion/structurer.ts` | Use `extractJson` from utils, add field validation and coercion |
+| `src/lib/ingestion/supersession.ts` | Use `extractJson` from utils, add field coercion |
 | `src/app/api/admin/ingest/route.ts` | Use structured logger; store per-source results |
 | `src/app/api/cron/ingest/route.ts` | Use structured logger; store per-source results |
 | `src/app/api/admin/stats/route.ts` | Add response caching header |
 | `src/components/admin/queue-item.tsx` | Add edit button and toggle to inline editor |
-| `src/components/admin/queue-list.tsx` | Support edit+approve action flow |
-| `src/app/admin/queue/page.tsx` | Wire up edit action to API |
+| `src/components/admin/queue-list.tsx` | Add edit state management, wire edit+approve action flow |
 | `tests/lib/ingestion/pipeline.test.ts` | Add dedup and logger integration tests |
 
 ---
@@ -198,7 +199,7 @@ Expected: PASS (3 tests)
 Modify `src/lib/db/schema.ts` — add after the `costUsd` field in the `ingestionRuns` table:
 
 ```typescript
-    perSourceResults: text("per_source_results"), // JSON string of SourceResult[]
+    perSourceResults: jsonb("per_source_results"), // SourceResult[] — use jsonb for structured querying
 ```
 
 - [ ] **Step 6: Run existing schema tests to verify no breakage**
@@ -225,7 +226,7 @@ git commit -m "feat: add PipelineLogger for per-source structured logging"
 - Modify: `tests/lib/ingestion/structurer.test.ts`
 - Modify: `tests/lib/ingestion/supersession.test.ts`
 
-**Context:** All three AI call sites do bare `JSON.parse(text)` with no error handling. If Claude returns malformed JSON (markdown fences, extra text, partial response), the pipeline crashes. This adds: extraction of JSON from markdown fences, retry on parse failure, and field validation.
+**Context:** All three AI call sites do bare `JSON.parse(text)` with no error handling. If Claude returns malformed JSON (markdown fences, extra text, partial response), the pipeline crashes. This adds: extraction of JSON from markdown fences and field validation. The `extractJson` helper lives in `src/lib/utils/json.ts` since it's shared across relevance-filter, structurer, and supersession.
 
 - [ ] **Step 1: Read existing tests for relevance-filter, structurer, and supersession**
 
@@ -234,10 +235,10 @@ Purpose: Understand existing test patterns before adding new ones.
 
 - [ ] **Step 2: Write failing test for robust JSON extraction**
 
-Add to `tests/lib/ingestion/relevance-filter.test.ts`:
+Create `tests/lib/utils/json.test.ts`:
 
 ```typescript
-import { extractJson } from "@/lib/ingestion/relevance-filter";
+import { extractJson } from "@/lib/utils/json";
 
 describe("extractJson", () => {
   it("parses clean JSON", () => {
@@ -265,23 +266,15 @@ describe("extractJson", () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `npx vitest run tests/lib/ingestion/relevance-filter.test.ts`
-Expected: FAIL — `extractJson` not exported
+Run: `npx vitest run tests/lib/utils/json.test.ts`
+Expected: FAIL — module `@/lib/utils/json` not found
 
-- [ ] **Step 4: Implement `extractJson` helper and update relevance-filter**
+- [ ] **Step 4: Implement `extractJson` helper in shared utils**
 
-Replace `src/lib/ingestion/relevance-filter.ts` with:
+Create `src/lib/utils/json.ts`:
 
 ```typescript
-import { getAnthropicClient } from "@/lib/ai/client";
-import { RELEVANCE_FILTER_PROMPT } from "@/lib/ai/prompts";
-import type { RunTracker } from "./tracker";
-
-interface RelevanceResult {
-  score: number;
-  reason: string;
-}
-
+// src/lib/utils/json.ts
 export function extractJson(text: string): Record<string, unknown> {
   // Try direct parse first
   try {
@@ -299,6 +292,27 @@ export function extractJson(text: string): Record<string, unknown> {
     }
     throw new Error(`Could not extract JSON from: ${text.slice(0, 200)}`);
   }
+}
+```
+
+- [ ] **Step 5: Run extractJson tests to verify they pass**
+
+Run: `npx vitest run tests/lib/utils/json.test.ts`
+Expected: PASS (4 tests)
+
+- [ ] **Step 6: Update relevance-filter to use shared `extractJson`**
+
+Replace `src/lib/ingestion/relevance-filter.ts` with:
+
+```typescript
+import { getAnthropicClient } from "@/lib/ai/client";
+import { RELEVANCE_FILTER_PROMPT } from "@/lib/ai/prompts";
+import { extractJson } from "@/lib/utils/json";
+import type { RunTracker } from "./tracker";
+
+interface RelevanceResult {
+  score: number;
+  reason: string;
 }
 
 export async function filterRelevance(
@@ -341,17 +355,17 @@ export async function filterRelevance(
 }
 ```
 
-- [ ] **Step 5: Update structurer with same `extractJson` pattern and field validation**
+- [ ] **Step 7: Update structurer with `extractJson` and field validation**
 
 Replace `src/lib/ingestion/structurer.ts` with:
 
 ```typescript
 import { getAnthropicClient } from "@/lib/ai/client";
 import { STRUCTURER_PROMPT } from "@/lib/ai/prompts";
+import { extractJson } from "@/lib/utils/json";
 import { ENTRY_TYPES, CATEGORIES } from "@/types";
 import type { EntryType } from "@/types";
 import type { RunTracker } from "./tracker";
-import { extractJson } from "./relevance-filter";
 
 interface StructuredEntry {
   type: EntryType;
@@ -411,7 +425,7 @@ export async function structureEntry(
 }
 ```
 
-- [ ] **Step 6: Update supersession with same `extractJson` pattern**
+- [ ] **Step 8: Update supersession with `extractJson`**
 
 In `src/lib/ingestion/supersession.ts`, replace the `checkSupersession` function's JSON parsing:
 
@@ -433,18 +447,18 @@ To:
 
 Add import at top of file:
 ```typescript
-import { extractJson } from "./relevance-filter";
+import { extractJson } from "@/lib/utils/json";
 ```
 
-- [ ] **Step 7: Run all ingestion tests**
+- [ ] **Step 9: Run all ingestion tests**
 
-Run: `npx vitest run tests/lib/ingestion/`
+Run: `npx vitest run tests/lib/ingestion/ tests/lib/utils/`
 Expected: PASS (all existing tests + new extractJson tests)
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
-git add src/lib/ingestion/relevance-filter.ts src/lib/ingestion/structurer.ts src/lib/ingestion/supersession.ts tests/lib/ingestion/relevance-filter.test.ts
+git add src/lib/utils/json.ts tests/lib/utils/json.test.ts src/lib/ingestion/relevance-filter.ts src/lib/ingestion/structurer.ts src/lib/ingestion/supersession.ts
 git commit -m "fix: add robust JSON extraction and field validation to AI pipeline"
 ```
 
@@ -636,6 +650,10 @@ Expected: FAIL — module not found
 ```typescript
 // src/lib/ingestion/dedup.ts
 export function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) {
+    throw new Error(`Vector length mismatch: ${a.length} vs ${b.length}`);
+  }
+
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;
@@ -678,24 +696,34 @@ In `src/lib/ingestion/pipeline.ts`, add import:
 import { isDuplicate } from "./dedup";
 ```
 
-In `processSource`, after generating the embedding (line 95) and before storing the draft entry (line 98), add:
+In `processSource`, **before** the per-item loop (after `result.errors.push(...crawlResult.errors)`), fetch existing embeddings once:
 
 ```typescript
-      // 5b. Semantic deduplication — check against recent entries
-      const recentEntries = await db
-        .select({ id: entries.id, embedding: entries.embedding })
-        .from(entries)
-        .where(eq(entries.status, "active"))
-        .limit(200);
+  // Pre-fetch active entry embeddings for semantic dedup (once per source, not per item)
+  const recentEntries = await db
+    .select({ id: entries.id, embedding: entries.embedding })
+    .from(entries)
+    .where(eq(entries.status, "active"))
+    .limit(200);
 
-      const entriesWithEmbeddings = recentEntries
-        .filter((e): e is typeof e & { embedding: number[] } => e.embedding !== null);
+  const dedupCandidates = recentEntries
+    .filter((e): e is typeof e & { embedding: number[] } => e.embedding !== null);
+```
 
-      if (isDuplicate(embedding, entriesWithEmbeddings)) {
+Then, inside the loop, after generating the embedding (line 95) and before storing the draft entry (line 98), add:
+
+```typescript
+      // 5b. Semantic deduplication
+      if (isDuplicate(embedding, dedupCandidates)) {
         await db.update(rawItems).set({ processed: true }).where(eq(rawItems.id, inserted[0].id));
         continue;
       }
+
+      // Add this entry's embedding to candidates for subsequent items in this run
+      dedupCandidates.push({ id: "pending", embedding });
 ```
+
+This ensures: (a) only one DB query per source, not per item, and (b) items within the same run are deduped against each other.
 
 - [ ] **Step 6: Run pipeline tests**
 
@@ -720,13 +748,9 @@ git commit -m "feat: add semantic deduplication via cosine similarity"
 
 - [ ] **Step 1: Add caching headers to stats route**
 
-At the top of `src/app/api/admin/stats/route.ts`, add route segment config:
+Note: Do NOT use `export const revalidate` — this route has side effects (auto-heals stale running jobs), which are incompatible with Next.js static revalidation. Use `Cache-Control` header only.
 
-```typescript
-export const revalidate = 10; // ISR: revalidate every 10 seconds
-```
-
-At the end of the GET handler, replace the `return NextResponse.json(...)` with:
+At the end of the GET handler in `src/app/api/admin/stats/route.ts`, replace the `return NextResponse.json(...)` with:
 
 ```typescript
   const response = NextResponse.json({
@@ -917,7 +941,7 @@ git commit -m "feat: rewrite AI prompts for higher editorial quality"
 - Create: `tests/api/admin/entries-edit.test.ts`
 - Modify: `src/lib/db/schema.ts` (add `editedFields` column to `entries`)
 
-**Context:** The admin queue currently only supports approve/reject. Spec Section 2.4 requires inline editing so the curator can fix titles, summaries, etc. before approving. This task adds the API route. The UI component comes in Task 8.
+**Context:** The admin queue currently only supports approve/reject. Spec Section 2.4 requires inline editing so the curator can fix titles, summaries, etc. before approving. This task adds the API route. The UI component comes in Task 8. Note: This route is under `/api/admin/` which is protected by the existing middleware at `src/middleware.ts` — same as the existing approve/reject routes.
 
 - [ ] **Step 1: Add `editedFields` column to entries schema**
 
@@ -931,20 +955,16 @@ In `src/lib/db/schema.ts`, add after the `embedding` field in the `entries` tabl
 
 ```typescript
 // tests/api/admin/entries-edit.test.ts
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock the database
+const mockReturning = vi.fn();
+
 vi.mock("@/lib/db", () => ({
   db: {
     update: vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: "test-id",
-            title: "Updated Title",
-            summary: "Updated Summary",
-            editedFields: '["title","summary"]',
-          }]),
+          returning: mockReturning,
         }),
       }),
     }),
@@ -952,7 +972,19 @@ vi.mock("@/lib/db", () => ({
 }));
 
 describe("PUT /api/admin/entries/[id]/edit", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    mockReturning.mockReset();
+  });
+
   it("updates entry fields and records which fields were edited", async () => {
+    mockReturning.mockResolvedValue([{
+      id: "test-id",
+      title: "Updated Title",
+      summary: "Updated Summary",
+      editedFields: '["title","summary"]',
+    }]);
+
     const { PUT } = await import("@/app/api/admin/entries/[id]/edit/route");
 
     const request = new Request("http://localhost/api/admin/entries/test-id/edit", {
@@ -971,6 +1003,40 @@ describe("PUT /api/admin/entries/[id]/edit", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.success).toBe(true);
+  });
+
+  it("returns 400 when no valid fields are provided", async () => {
+    const { PUT } = await import("@/app/api/admin/entries/[id]/edit/route");
+
+    const request = new Request("http://localhost/api/admin/entries/test-id/edit", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ invalidField: "value" }),
+    });
+
+    const response = await PUT(request, {
+      params: Promise.resolve({ id: "test-id" }),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 404 when entry does not exist", async () => {
+    mockReturning.mockResolvedValue([]);
+
+    const { PUT } = await import("@/app/api/admin/entries/[id]/edit/route");
+
+    const request = new Request("http://localhost/api/admin/entries/nonexistent/edit", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New Title" }),
+    });
+
+    const response = await PUT(request, {
+      params: Promise.resolve({ id: "nonexistent" }),
+    });
+
+    expect(response.status).toBe(404);
   });
 });
 ```
@@ -1246,11 +1312,16 @@ export function QueueItem({ entry, onAction, onEdit, isEditing, onSaveEdit, onCa
 }
 ```
 
-- [ ] **Step 4: Wire edit flow into queue page**
+- [ ] **Step 4: Wire edit flow into queue-list component**
 
-Read and update `src/app/admin/queue/page.tsx` to:
-1. Track `editingId` state
-2. Add `handleSaveEdit` that calls `PUT /api/admin/entries/${id}/edit` then `POST /api/admin/entries/${id}/approve`
+Note: `src/app/admin/queue/page.tsx` is a thin server component that just renders `<QueueList />`. The actual state management lives in `src/components/admin/queue-list.tsx`.
+
+Read and update `src/components/admin/queue-list.tsx` to:
+1. Track `editingId` state (`useState<string | null>(null)`)
+2. Add `handleSaveEdit` that:
+   - If `updates` is non-empty: calls `PUT /api/admin/entries/${id}/edit` first
+   - Then calls `POST /api/admin/entries/${id}/approve`
+   - Refreshes the queue list
 3. Pass `onEdit`, `isEditing`, `onSaveEdit`, `onCancelEdit` props to each `QueueItem`
 
 - [ ] **Step 5: Verify the admin queue works in the browser**
@@ -1261,7 +1332,7 @@ Navigate to `/admin/queue` — verify Edit button appears, inline form opens, an
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/components/admin/queue-item-editor.tsx src/components/admin/queue-item.tsx src/app/admin/queue/page.tsx
+git add src/components/admin/queue-item-editor.tsx src/components/admin/queue-item.tsx src/components/admin/queue-list.tsx
 git commit -m "feat: add inline editing to admin review queue"
 ```
 
