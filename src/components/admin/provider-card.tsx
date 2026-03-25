@@ -17,6 +17,12 @@ const PROVIDER_LABELS: Record<string, string> = {
   gemini: "Google Gemini",
 };
 
+const API_KEY_URLS: Record<string, string> = {
+  anthropic: "https://console.anthropic.com/settings/keys",
+  openai: "https://platform.openai.com/api-keys",
+  gemini: "https://aistudio.google.com/apikey",
+};
+
 interface ProviderCardProps {
   provider: string;
   maskedKey: string | null;
@@ -93,7 +99,17 @@ export function ProviderCard({
       </div>
 
       <div className="mb-3">
-        <label className="text-xs text-gray-500">API Key</label>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500">API Key</label>
+          <a
+            href={API_KEY_URLS[provider]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-blue-500 hover:text-blue-700 hover:underline"
+          >
+            Get key &rarr;
+          </a>
+        </div>
         {editing ? (
           <div className="flex gap-2 mt-1">
             <Input
