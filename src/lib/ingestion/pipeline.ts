@@ -11,6 +11,7 @@ import { filterRelevance } from "./relevance-filter";
 import { structureEntry } from "./structurer";
 import { findSupersessionCandidates, checkSupersession } from "./supersession";
 import { generateEmbedding } from "@/lib/embeddings/client";
+import { isDuplicate } from "./dedup";
 import { generateSlug } from "@/lib/utils/slug";
 import type { Crawler } from "./crawlers/types";
 import type { SourceType } from "@/types";
@@ -67,6 +68,16 @@ export async function processSource(
     errors: crawlResult.errors,
   });
 
+  // Pre-fetch active entry embeddings for semantic dedup (once per source, not per item)
+  const recentEntries = await db
+    .select({ id: entries.id, embedding: entries.embedding })
+    .from(entries)
+    .where(eq(entries.status, "active"))
+    .limit(200);
+
+  const dedupCandidates = recentEntries
+    .filter((e): e is typeof e & { embedding: number[] } => e.embedding !== null);
+
   // 2. Deduplicate by URL and store raw items
   for (const item of crawlResult.items) {
     try {
@@ -108,6 +119,15 @@ export async function processSource(
       // 5. Generate embedding
       const embeddingText = `${structured.title} ${structured.summary}`;
       const embedding = await generateEmbedding(embeddingText);
+
+      // 5b. Semantic deduplication
+      if (isDuplicate(embedding, dedupCandidates)) {
+        await db.update(rawItems).set({ processed: true }).where(eq(rawItems.id, inserted[0].id));
+        continue;
+      }
+
+      // Add this entry's embedding to candidates for subsequent items in this run
+      dedupCandidates.push({ id: "pending", embedding });
 
       // 6. Store as draft entry
       const slug = generateSlug(structured.title);

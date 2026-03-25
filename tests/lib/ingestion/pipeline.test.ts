@@ -51,7 +51,17 @@ vi.mock("@/lib/db", () => ({
     }),
     select: vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([]),
+        where: vi.fn().mockReturnValue(
+          Object.assign(Promise.resolve([]), {
+            limit: vi.fn().mockResolvedValue([]),
+            and: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([]),
+            }),
+          })
+        ),
+        orderBy: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
       }),
     }),
     update: vi.fn().mockReturnValue({
