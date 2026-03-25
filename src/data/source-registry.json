@@ -1,0 +1,146 @@
+[
+  {
+    "url": "https://simonwillison.net/atom/everything/",
+    "type": "rss",
+    "name": "Simon Willison's Weblog",
+    "description": "Prolific AI tools commentary, tutorials, and tool reviews",
+    "tools": ["Claude Code", "Copilot", "ChatGPT", "Cursor"],
+    "categories": ["Code Generation", "Architecture"]
+  },
+  {
+    "url": "https://github.com/anthropics/claude-code",
+    "type": "github",
+    "name": "Claude Code Releases",
+    "description": "Official Claude Code releases and changelogs",
+    "tools": ["Claude Code"],
+    "categories": ["Code Generation", "Testing", "Debugging"]
+  },
+  {
+    "url": "https://github.com/getcursor/cursor",
+    "type": "github",
+    "name": "Cursor Releases",
+    "description": "Cursor IDE releases and changelogs",
+    "tools": ["Cursor"],
+    "categories": ["Code Generation", "Code Review"]
+  },
+  {
+    "url": "https://github.blog/feed/",
+    "type": "rss",
+    "name": "GitHub Blog",
+    "description": "GitHub product updates including Copilot features",
+    "tools": ["Copilot"],
+    "categories": ["Code Generation", "Code Review", "DevOps"]
+  },
+  {
+    "url": "https://www.reddit.com/r/cursor",
+    "type": "reddit",
+    "name": "r/cursor",
+    "description": "Community discussion about Cursor IDE",
+    "tools": ["Cursor"],
+    "categories": ["Code Generation", "Code Review"]
+  },
+  {
+    "url": "https://www.reddit.com/r/ClaudeAI",
+    "type": "reddit",
+    "name": "r/ClaudeAI",
+    "description": "Community discussion about Claude and Claude Code",
+    "tools": ["Claude Code"],
+    "categories": ["Code Generation", "Testing"]
+  },
+  {
+    "url": "https://www.reddit.com/r/LocalLLaMA",
+    "type": "reddit",
+    "name": "r/LocalLLaMA",
+    "description": "Local AI model discussion including coding use cases",
+    "tools": ["Aider", "Cline"],
+    "categories": ["Code Generation", "Architecture"]
+  },
+  {
+    "url": "https://www.reddit.com/r/ChatGPTPro",
+    "type": "reddit",
+    "name": "r/ChatGPTPro",
+    "description": "Advanced ChatGPT usage including coding workflows",
+    "tools": ["Copilot", "ChatGPT"],
+    "categories": ["Code Generation"]
+  },
+  {
+    "url": "https://news.ycombinator.com",
+    "type": "hackernews",
+    "name": "Hacker News",
+    "description": "Tech news with strong AI coding tool coverage",
+    "tools": ["Claude Code", "Cursor", "Copilot"],
+    "categories": ["Code Generation", "Architecture", "DevOps"]
+  },
+  {
+    "url": "https://www.anthropic.com/blog/rss",
+    "type": "rss",
+    "name": "Anthropic Blog",
+    "description": "Official Anthropic announcements and research",
+    "tools": ["Claude Code"],
+    "categories": ["Code Generation", "Architecture"]
+  },
+  {
+    "url": "https://openai.com/blog/rss",
+    "type": "rss",
+    "name": "OpenAI Blog",
+    "description": "Official OpenAI announcements including Codex and GPT updates",
+    "tools": ["Copilot", "ChatGPT"],
+    "categories": ["Code Generation"]
+  },
+  {
+    "url": "https://github.com/paul-gauthier/aider",
+    "type": "github",
+    "name": "Aider Releases",
+    "description": "Aider AI coding assistant releases",
+    "tools": ["Aider"],
+    "categories": ["Code Generation", "Code Review"]
+  },
+  {
+    "url": "https://github.com/cline/cline",
+    "type": "github",
+    "name": "Cline Releases",
+    "description": "Cline AI coding assistant releases",
+    "tools": ["Cline"],
+    "categories": ["Code Generation"]
+  },
+  {
+    "url": "https://codeium.com/blog/rss",
+    "type": "rss",
+    "name": "Codeium Blog",
+    "description": "Windsurf and Codeium product updates",
+    "tools": ["Windsurf"],
+    "categories": ["Code Generation", "Code Review"]
+  },
+  {
+    "url": "https://sourcegraph.com/blog/rss",
+    "type": "rss",
+    "name": "Sourcegraph Blog",
+    "description": "Cody AI assistant and code intelligence updates",
+    "tools": ["Cody"],
+    "categories": ["Code Generation", "Code Review", "Architecture"]
+  },
+  {
+    "url": "https://lilianweng.github.io/index.xml",
+    "type": "rss",
+    "name": "Lilian Weng's Blog",
+    "description": "In-depth AI research posts with coding implications",
+    "tools": [],
+    "categories": ["Architecture"]
+  },
+  {
+    "url": "https://www.latent.space/feed",
+    "type": "rss",
+    "name": "Latent Space Podcast",
+    "description": "AI engineering podcast covering coding tools and workflows",
+    "tools": ["Claude Code", "Cursor", "Copilot"],
+    "categories": ["Code Generation", "Architecture"]
+  },
+  {
+    "url": "https://buttondown.com/ainews/rss",
+    "type": "rss",
+    "name": "AI News Newsletter",
+    "description": "Daily AI news aggregation with developer focus",
+    "tools": ["Claude Code", "Cursor", "Copilot"],
+    "categories": ["Code Generation", "Testing", "DevOps"]
+  }
+]
