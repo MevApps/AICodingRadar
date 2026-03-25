@@ -14,6 +14,21 @@ Current state: small group of early users, seed data only (pipeline hasn't been 
 
 **Rename:** Drop "AI" from the name. "Coding Radar" is cleaner — the radar metaphor implies scanning and detecting signals. Avoids AI fatigue. This rename touches: page titles, meta tags, about page copy, hardcoded references in the codebase, Vercel project name, favicon/logo text, and any seed data containing the old name. Addressed as a prerequisite task in Section 3.1.
 
+## Current State (updated after initial implementation work)
+
+Since this spec was written, the following has been partially or fully implemented:
+- **Section 1.1 (Manual pipeline trigger):** Done — `POST /api/admin/ingest` with concurrency guard and budget check
+- **Section 1.5 (Cost monitoring):** Done — `RunTracker` class, `ingestionRuns` table with token/cost tracking, budget enforcement via `MONTHLY_BUDGET_CAP` env var
+- **Section 1.2 (Structured logging):** Partial — stats API provides aggregate metrics but lacks per-source/per-stage granular visibility
+- **Admin dashboard:** New (not in original spec) — `StatusDashboard` with metric cards (queue, sources, content, cost), run history, ingestion bar with "Run Now" button
+- **Source recommendations:** New (not in original spec) — curated registry of 19 sources, scoring algorithm, suggested sources UI in admin
+
+Areas needing improvement in existing work:
+- Stats API has no caching (queries DB every 30s per dashboard user)
+- `executeIngestion()` runs in background without explicit error boundaries
+- No test coverage for new tracking/API/recommendation code
+- Per-source stage-by-stage logging still missing
+
 ## Approach
 
 Pipeline-first, then polish. Validate the core product works with real content before investing in design and SEO. Real content informs every design decision.
