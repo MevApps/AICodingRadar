@@ -42,6 +42,7 @@ export const entries = pgTable(
     categories: text("categories").array().notNull().default([]),
     sources: text("sources").array().notNull().default([]),
     embedding: vector("embedding", { dimensions: 1024 }),
+    editedFields: text("edited_fields"), // JSON: which fields were edited during review
     createdAt: timestamp("created_at").defaultNow().notNull(),
     verifiedAt: timestamp("verified_at"),
     publishedAt: timestamp("published_at"),
