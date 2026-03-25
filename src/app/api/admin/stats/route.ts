@@ -75,7 +75,7 @@ export async function GET() {
 
   const budgetCap = parseFloat(process.env.MONTHLY_BUDGET_CAP ?? "50");
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     queue: { count: queueCount },
     sources: {
       healthy: healthySources.length,
@@ -97,4 +97,7 @@ export async function GET() {
     recentRuns,
     schedule: "0 * * * *",
   });
+
+  response.headers.set("Cache-Control", "private, max-age=10, stale-while-revalidate=20");
+  return response;
 }
