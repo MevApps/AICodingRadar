@@ -39,6 +39,7 @@ export function ProviderCard({
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<boolean | null>(null);
+  const [validationMessage, setValidationMessage] = useState<string | null>(null);
 
   const isConfigured = maskedKey !== null;
   const statusColor = validationResult === true
@@ -67,9 +68,18 @@ export function ProviderCard({
 
   async function handleValidate() {
     setValidating(true);
-    const valid = await onValidate();
-    setValidationResult(valid);
+    setValidationMessage(null);
+    try {
+      const valid = await onValidate();
+      setValidationResult(valid);
+      setValidationMessage(valid ? "API key is valid!" : "API key is invalid or expired.");
+    } catch {
+      setValidationResult(false);
+      setValidationMessage("Connection failed. Check your key.");
+    }
     setValidating(false);
+    // Auto-hide message after 5 seconds
+    setTimeout(() => setValidationMessage(null), 5000);
   }
 
   return (
@@ -115,6 +125,18 @@ export function ProviderCard({
           </div>
         )}
       </div>
+
+      {validationMessage && (
+        <div
+          className={`mb-3 rounded-md px-3 py-2 text-sm ${
+            validationResult
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}
+        >
+          {validationResult ? "✓" : "✗"} {validationMessage}
+        </div>
+      )}
 
       <div>
         <label className="text-xs text-gray-500">Model</label>
