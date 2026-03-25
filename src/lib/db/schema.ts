@@ -10,6 +10,7 @@ import {
   primaryKey,
   index,
   vector,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const entryTypeEnum = pgEnum("entry_type", [
@@ -134,6 +135,7 @@ export const ingestionRuns = pgTable(
     tokensInput: integer("tokens_input").notNull().default(0),
     tokensOutput: integer("tokens_output").notNull().default(0),
     costUsd: real("cost_usd").notNull().default(0),
+    perSourceResults: jsonb("per_source_results"), // SourceResult[] — use jsonb for structured querying
     triggeredBy: triggeredByEnum("triggered_by").notNull(),
   },
   (table) => [
