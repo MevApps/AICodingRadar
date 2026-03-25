@@ -1,5 +1,6 @@
 import { getAnthropicClient } from "@/lib/ai/client";
 import { SUPERSESSION_PROMPT } from "@/lib/ai/prompts";
+import type { RunTracker } from "./tracker";
 
 interface SupersessionResult {
   supersedes: boolean;
@@ -8,7 +9,8 @@ interface SupersessionResult {
 
 export async function checkSupersession(
   newEntry: { title: string; body: string },
-  existingEntry: { title: string; body: string }
+  existingEntry: { title: string; body: string },
+  tracker?: RunTracker
 ): Promise<SupersessionResult> {
   const client = getAnthropicClient();
 
@@ -23,6 +25,13 @@ export async function checkSupersession(
       },
     ],
   });
+
+  if (tracker && response.usage) {
+    tracker.recordUsage({
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    });
+  }
 
   const text = response.content[0].type === "text" ? response.content[0].text : "";
   return JSON.parse(text);

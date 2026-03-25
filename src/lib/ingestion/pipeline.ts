@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
-import { rawItems, entries, entrySupersessions } from "@/lib/db/schema";
+import { rawItems, entries, entrySupersessions, sources } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { RunTracker } from "./tracker";
 import { RssCrawler } from "./crawlers/rss";
 import { GitHubCrawler } from "./crawlers/github";
 import { RedditCrawler } from "./crawlers/reddit";
@@ -25,6 +26,7 @@ interface PipelineResult {
   crawled: number;
   relevant: number;
   structured: number;
+  supersessionsFound: number;
   errors: string[];
 }
 
@@ -43,8 +45,8 @@ function getCrawler(type: SourceType): Crawler {
   }
 }
 
-export async function processSource(source: SourceInput): Promise<PipelineResult> {
-  const result: PipelineResult = { crawled: 0, relevant: 0, structured: 0, errors: [] };
+export async function processSource(source: SourceInput, tracker?: RunTracker): Promise<PipelineResult> {
+  const result: PipelineResult = { crawled: 0, relevant: 0, structured: 0, supersessionsFound: 0, errors: [] };
 
   // 1. Crawl
   const crawler = getCrawler(source.type);
@@ -72,7 +74,7 @@ export async function processSource(source: SourceInput): Promise<PipelineResult
       const relevance = await filterRelevance({
         title: item.title,
         content: item.content,
-      });
+      }, tracker);
 
       await db
         .update(rawItems)
@@ -86,7 +88,7 @@ export async function processSource(source: SourceInput): Promise<PipelineResult
       const structured = await structureEntry({
         title: item.title,
         content: item.content,
-      });
+      }, tracker);
 
       // 5. Generate embedding
       const embeddingText = `${structured.title} ${structured.summary}`;
@@ -125,10 +127,12 @@ export async function processSource(source: SourceInput): Promise<PipelineResult
         const existing = activeEntries.find((e) => e.id === candidate.id)!;
         const supersessionResult = await checkSupersession(
           { title: structured.title, body: structured.body },
-          { title: existing.title, body: existing.body }
+          { title: existing.title, body: existing.body },
+          tracker
         );
 
         if (supersessionResult.supersedes) {
+          result.supersessionsFound++;
           await db.insert(entrySupersessions).values({
             supersedingEntryId: newEntry.id,
             supersededEntryId: candidate.id,
@@ -149,6 +153,79 @@ export async function processSource(source: SourceInput): Promise<PipelineResult
       result.errors.push(
         `Error processing item "${item.title}": ${(error as Error).message}`
       );
+    }
+  }
+
+  return result;
+}
+
+export async function processBacklog(
+  tracker?: RunTracker
+): Promise<PipelineResult> {
+  const result: PipelineResult = {
+    crawled: 0, relevant: 0, structured: 0, supersessionsFound: 0, errors: [],
+  };
+
+  const unprocessed = await db
+    .select()
+    .from(rawItems)
+    .where(eq(rawItems.processed, false))
+    .orderBy(rawItems.createdAt)
+    .limit(50);
+
+  for (const item of unprocessed) {
+    try {
+      const [source] = await db
+        .select({ relevanceThreshold: sources.relevanceThreshold })
+        .from(sources)
+        .where(eq(sources.id, item.sourceId))
+        .limit(1);
+
+      const threshold = source?.relevanceThreshold ?? 0.5;
+
+      const relevance = await filterRelevance(
+        { title: item.title, content: item.content },
+        tracker
+      );
+
+      await db
+        .update(rawItems)
+        .set({ relevanceScore: relevance.score })
+        .where(eq(rawItems.id, item.id));
+
+      if (relevance.score < threshold) {
+        await db.update(rawItems).set({ processed: true }).where(eq(rawItems.id, item.id));
+        continue;
+      }
+      result.relevant++;
+
+      const structured = await structureEntry(
+        { title: item.title, content: item.content },
+        tracker
+      );
+
+      const embeddingText = `${structured.title} ${structured.summary}`;
+      const embedding = await generateEmbedding(embeddingText);
+
+      const slug = generateSlug(structured.title);
+      await db.insert(entries).values({
+        type: structured.type,
+        status: "active",
+        confidence: "draft",
+        title: structured.title,
+        slug,
+        summary: structured.summary,
+        body: structured.body,
+        tools: structured.tools,
+        categories: structured.categories,
+        sources: [item.externalUrl],
+        embedding,
+      });
+
+      result.structured++;
+      await db.update(rawItems).set({ processed: true }).where(eq(rawItems.id, item.id));
+    } catch (error) {
+      result.errors.push(`Backlog error "${item.title}": ${(error as Error).message}`);
     }
   }
 
