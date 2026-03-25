@@ -64,7 +64,7 @@ Run the pipeline 5 times, get real draft entries in the review queue, approve th
 
 ### 2.1 Prompt Evaluation
 
-Run real content through the 2 prompts in `src/lib/ai/prompts.ts` (`RELEVANCE_FILTER_PROMPT` and `STRUCTURER_PROMPT`). The structurer produces title, summary, and body as part of its JSON output — there is no separate summary prompt. Collect output and identify patterns in what's bad.
+Run real content through the 2 editorial prompts in `src/lib/ai/prompts.ts` (`RELEVANCE_FILTER_PROMPT` and `STRUCTURER_PROMPT`). The structurer produces title, summary, and body as part of its JSON output — there is no separate summary prompt. Collect output and identify patterns in what's bad.
 
 ### 2.2 Prompt Iteration
 
