@@ -19,6 +19,7 @@ interface QueueEntry {
 export function QueueList() {
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const fetchQueue = useCallback(async () => {
     const res = await fetch("/api/admin/queue");
@@ -34,6 +35,22 @@ export function QueueList() {
   async function handleAction(id: string, action: "approve" | "reject") {
     await fetch(`/api/admin/entries/${id}/${action}`, { method: "POST" });
     setEntries((prev) => prev.filter((e) => e.id !== id));
+    setEditingId(null);
+  }
+
+  async function handleSaveEdit(id: string, updates: Record<string, unknown>) {
+    // If there are actual edits, save them first
+    if (Object.keys(updates).length > 0) {
+      await fetch(`/api/admin/entries/${id}/edit`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+    }
+    // Then approve
+    await fetch(`/api/admin/entries/${id}/approve`, { method: "POST" });
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+    setEditingId(null);
   }
 
   if (loading) {
@@ -47,7 +64,15 @@ export function QueueList() {
   return (
     <div className="space-y-4">
       {entries.map((entry) => (
-        <QueueItem key={entry.id} entry={entry} onAction={handleAction} />
+        <QueueItem
+          key={entry.id}
+          entry={entry}
+          onAction={handleAction}
+          onEdit={setEditingId}
+          isEditing={editingId === entry.id}
+          onSaveEdit={handleSaveEdit}
+          onCancelEdit={() => setEditingId(null)}
+        />
       ))}
     </div>
   );

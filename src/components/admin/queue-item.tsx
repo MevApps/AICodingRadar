@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { QueueItemEditor } from "./queue-item-editor";
 
 interface QueueEntry {
   id: string;
@@ -20,9 +21,17 @@ interface QueueEntry {
 interface QueueItemProps {
   entry: QueueEntry;
   onAction: (id: string, action: "approve" | "reject") => void;
+  onEdit: (id: string) => void;
+  isEditing: boolean;
+  onSaveEdit: (id: string, updates: Record<string, unknown>) => void;
+  onCancelEdit: () => void;
 }
 
-export function QueueItem({ entry, onAction }: QueueItemProps) {
+export function QueueItem({ entry, onAction, onEdit, isEditing, onSaveEdit, onCancelEdit }: QueueItemProps) {
+  if (isEditing) {
+    return <QueueItemEditor entry={entry} onSave={onSaveEdit} onCancel={onCancelEdit} />;
+  }
+
   return (
     <Card>
       <div className="flex items-start justify-between gap-4">
@@ -65,6 +74,9 @@ export function QueueItem({ entry, onAction }: QueueItemProps) {
         <div className="flex gap-2">
           <Button size="sm" onClick={() => onAction(entry.id, "approve")}>
             Approve
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => onEdit(entry.id)}>
+            Edit
           </Button>
           <Button size="sm" variant="danger" onClick={() => onAction(entry.id, "reject")}>
             Reject
