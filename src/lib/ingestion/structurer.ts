@@ -1,5 +1,7 @@
 import { getAnthropicClient } from "@/lib/ai/client";
 import { STRUCTURER_PROMPT } from "@/lib/ai/prompts";
+import { extractJson } from "@/lib/utils/json";
+import { ENTRY_TYPES, CATEGORIES } from "@/types";
 import type { EntryType } from "@/types";
 import type { RunTracker } from "./tracker";
 
@@ -11,6 +13,9 @@ interface StructuredEntry {
   tools: string[];
   categories: string[];
 }
+
+const VALID_TYPES = new Set<string>(ENTRY_TYPES);
+const VALID_CATEGORIES = new Set<string>(CATEGORIES);
 
 export async function structureEntry(
   item: { title: string; content: string },
@@ -38,5 +43,21 @@ export async function structureEntry(
   }
 
   const text = response.content[0].type === "text" ? response.content[0].text : "";
-  return JSON.parse(text);
+  const parsed = extractJson(text);
+
+  // Validate and coerce fields
+  const type = VALID_TYPES.has(String(parsed.type)) ? String(parsed.type) as EntryType : "tip";
+  const tools = Array.isArray(parsed.tools) ? parsed.tools.map(String) : [];
+  const categories = Array.isArray(parsed.categories)
+    ? parsed.categories.map(String).filter((c) => VALID_CATEGORIES.has(c))
+    : [];
+
+  return {
+    type,
+    title: String(parsed.title ?? item.title),
+    summary: String(parsed.summary ?? ""),
+    body: String(parsed.body ?? ""),
+    tools,
+    categories,
+  };
 }

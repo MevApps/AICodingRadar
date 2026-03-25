@@ -1,5 +1,6 @@
 import { getAnthropicClient } from "@/lib/ai/client";
 import { RELEVANCE_FILTER_PROMPT } from "@/lib/ai/prompts";
+import { extractJson } from "@/lib/utils/json";
 import type { RunTracker } from "./tracker";
 
 interface RelevanceResult {
@@ -33,10 +34,15 @@ export async function filterRelevance(
   }
 
   const text = response.content[0].type === "text" ? response.content[0].text : "";
-  const parsed = JSON.parse(text);
+  const parsed = extractJson(text);
+
+  const score = Number(parsed.score);
+  if (isNaN(score) || score < 0 || score > 1) {
+    throw new Error(`Invalid relevance score: ${parsed.score}`);
+  }
 
   return {
-    score: parsed.score,
-    reason: parsed.reason,
+    score,
+    reason: String(parsed.reason ?? ""),
   };
 }
