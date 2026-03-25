@@ -37,6 +37,11 @@ describe("PipelineLogger", () => {
     expect(results.find((r) => r.sourceName === "Blog B")!.crawl.errors).toEqual(["timeout"]);
   });
 
+  it("throws when recording for an unregistered sourceId", () => {
+    const logger = new PipelineLogger();
+    expect(() => logger.recordCrawl("ghost", { itemsFound: 1, errors: [] })).toThrow("unknown sourceId");
+  });
+
   it("produces a JSON-serializable summary", () => {
     const logger = new PipelineLogger();
     logger.startSource("s1", "Test");

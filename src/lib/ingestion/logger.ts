@@ -1,25 +1,25 @@
-interface CrawlResult {
+export interface CrawlResult {
   itemsFound: number;
   errors: string[];
 }
 
-interface RelevanceResult {
+export interface RelevanceResult {
   itemsScored: number;
   itemsPassed: number;
   scores: number[];
 }
 
-interface StructuringResult {
+export interface StructuringResult {
   itemsStructured: number;
   errors: string[];
 }
 
-interface SupersessionResult {
+export interface SupersessionResult {
   checked: number;
   found: number;
 }
 
-interface SourceResult {
+export interface SourceResult {
   sourceId: string;
   sourceName: string;
   crawl: CrawlResult;
@@ -44,22 +44,26 @@ export class PipelineLogger {
 
   recordCrawl(sourceId: string, result: CrawlResult): void {
     const source = this.sources.get(sourceId);
-    if (source) source.crawl = result;
+    if (!source) throw new Error(`PipelineLogger: unknown sourceId "${sourceId}"`);
+    source.crawl = result;
   }
 
   recordRelevance(sourceId: string, result: RelevanceResult): void {
     const source = this.sources.get(sourceId);
-    if (source) source.relevance = result;
+    if (!source) throw new Error(`PipelineLogger: unknown sourceId "${sourceId}"`);
+    source.relevance = result;
   }
 
   recordStructuring(sourceId: string, result: StructuringResult): void {
     const source = this.sources.get(sourceId);
-    if (source) source.structuring = result;
+    if (!source) throw new Error(`PipelineLogger: unknown sourceId "${sourceId}"`);
+    source.structuring = result;
   }
 
   recordSupersession(sourceId: string, result: SupersessionResult): void {
     const source = this.sources.get(sourceId);
-    if (source) source.supersession = result;
+    if (!source) throw new Error(`PipelineLogger: unknown sourceId "${sourceId}"`);
+    source.supersession = result;
   }
 
   getSourceResults(): SourceResult[] {
