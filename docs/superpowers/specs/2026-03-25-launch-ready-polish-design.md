@@ -8,9 +8,11 @@
 
 Coding Radar (formerly "AI Coding Radar") is a web app that auto-aggregates AI coding news, structures it into actionable content, and detects when entries become outdated via supersession. Phase 1 MVP is built: feed with typed cards, ingestion pipeline, admin UI with review queue and source management.
 
+**Target audience:** Tech leads and engineering managers who need to stay informed about AI coding tools without spending hours tracking the space.
+
 Current state: small group of early users, seed data only (pipeline hasn't been run end-to-end with real sources), placeholder UI with Radix primitives, no branding or SEO.
 
-**Rename:** Drop "AI" from the name. "Coding Radar" is cleaner — the radar metaphor implies scanning and detecting signals. Avoids AI fatigue.
+**Rename:** Drop "AI" from the name. "Coding Radar" is cleaner — the radar metaphor implies scanning and detecting signals. Avoids AI fatigue. This rename touches: page titles, meta tags, about page copy, hardcoded references in the codebase, Vercel project name, favicon/logo text, and any seed data containing the old name. Addressed as a prerequisite task in Section 3.1.
 
 ## Approach
 
@@ -22,7 +24,7 @@ Pipeline-first, then polish. Validate the core product works with real content b
 
 ### 1.1 Local Pipeline Run
 
-Trigger ingestion manually (not just via cron). Fix crawler failures, API auth issues, and timeout problems as they surface. Validate each crawler (RSS, GitHub, Reddit, HN) individually before running the full pipeline.
+Trigger ingestion manually (not just via cron). Fix crawler failures, API auth issues, and timeout problems as they surface. Validate each crawler (RSS, GitHub, Reddit, HN) individually before running the full pipeline. Note: the schema also defines `twitter` and `scraper` source types — these are out of scope for this pass but should not break the pipeline if configured.
 
 ### 1.2 Structured Logging
 
@@ -46,7 +48,11 @@ Test with real entries. Verify:
 
 ### 1.5 Cost Monitoring
 
-Add a simple cost tracker: count API calls per pipeline run (Claude for relevance + structuring, Voyage for embeddings), estimate spend. Log per-run costs. Target: stay within ~$50/mo budget at hourly cadence.
+Add a simple cost tracker: count API calls per pipeline run (Claude for relevance + structuring, Voyage for embeddings), estimate spend. Log per-run costs using the existing `ingestionRuns` table fields (`tokensInput`, `tokensOutput`, `costUsd`). Target: stay within ~$50/mo budget at hourly cadence.
+
+**Budget math:** 720 runs/month (hourly). If each run crawls ~20 raw items, runs relevance on all 20 (~500 input tokens each = ~10K tokens/run), and structures ~5 relevant items (~2K tokens each = ~10K tokens/run), that's ~20K tokens/run × 720 = ~14.4M tokens/month. At Claude Sonnet pricing (~$3/M input, ~$15/M output) this is roughly $15-30/month for Claude + ~$5 for Voyage embeddings. Budget is realistic.
+
+**Fallback if costs exceed budget:** Reduce crawl cadence to every 2-4 hours, batch relevance checks, or skip low-priority sources.
 
 ### Success Criteria
 
@@ -58,7 +64,7 @@ Run the pipeline 5 times, get real draft entries in the review queue, approve th
 
 ### 2.1 Prompt Evaluation
 
-Run real content through the 3 prompts in `src/lib/ai/prompts.ts` (relevance scoring, structuring, summary generation). Collect output and identify patterns in what's bad.
+Run real content through the 2 prompts in `src/lib/ai/prompts.ts` (`RELEVANCE_FILTER_PROMPT` and `STRUCTURER_PROMPT`). The structurer produces title, summary, and body as part of its JSON output — there is no separate summary prompt. Collect output and identify patterns in what's bad.
 
 ### 2.2 Prompt Iteration
 
@@ -77,6 +83,8 @@ Calibrate the 0.0-1.0 relevance scoring by reviewing what scored high vs low aga
 
 Add inline edit capability to the admin review queue. Currently it's approve/reject only. Allow editing title, summary, body, tools, categories, and type before approving. This makes the human-in-the-loop fast enough to be sustainable.
 
+**Schema note:** The current `entries` table has no fields for edit tracking. Add an `editedFields` JSON column (or a separate `entry_edits` table) to store what was changed during review. This supports the quality feedback loop in 2.5. Requires a Drizzle migration.
+
 ### 2.5 Quality Feedback Loop
 
 Track which entries are edited before approving and what was changed. This data informs future prompt improvements.
@@ -91,6 +99,7 @@ Review 20+ real draft entries. At least 16 are publish-worthy with at most a min
 
 ### 3.1 Brand Identity
 
+- **Rename execution:** As a prerequisite, replace all references to "AI Coding Radar" with "Coding Radar" across the codebase (page titles, components, meta tags, seed data, Vercel project config)
 - **Name treatment:** "Coding Radar" with a simple logomark (styled radar/pulse icon in CSS/SVG)
 - **Color palette:** Primary accent color, neutral grays, semantic colors for entry types (tip=blue, comparison=purple, guide=green, breaking=red)
 - **Typography:** Distinctive heading font + clean body font (e.g., Inter for body, something with character for headlines)
@@ -109,7 +118,7 @@ With real content flowing, redesign card layouts:
 
 - **Click to navigate:** Clicking anywhere on a feed card navigates to the full entry detail page (`/entry/[slug]`)
 - **Hover state:** Subtle elevation/shadow shift or background tint to signal cards are interactive
-- **Separate action targets:** Share/dismiss buttons remain as distinct click targets that don't trigger navigation
+- **Separate action targets:** Share button remains as a distinct click target that doesn't trigger navigation. Dismiss functionality (hiding entries from a user's view) uses localStorage — no user accounts needed
 
 ### 3.4 Mobile Responsive
 
@@ -139,7 +148,7 @@ Optional but expected by developer audiences. Tailwind makes this straightforwar
 
 ### Success Criteria
 
-A stranger landing on the feed immediately understands what this is, trusts the content, and can navigate it effortlessly on any device.
+Measurable checks: (1) 5 external testers complete the core flow (land → scan → click entry → navigate back) without guidance, (2) Lighthouse accessibility score 90+, (3) all pages pass WCAG AA contrast checks, (4) feed and entry detail render correctly on mobile (375px) and desktop (1440px).
 
 ## Section 4: Credibility & SEO
 
@@ -155,14 +164,14 @@ A stranger landing on the feed immediately understands what this is, trusts the 
 - Proper `<title>` and `<meta description>` on every page
 - Semantic HTML: `<article>`, heading hierarchy, `<time>` elements
 - Sitemap generation (`sitemap.xml`) for all published entry pages
-- RSS feed output — let people subscribe to the radar itself
+- RSS feed output at `/feed.xml` (RSS 2.0 format) — includes title + summary for each published entry, most recent 50 entries, with link to full entry detail page. Lets people subscribe to the radar itself
 - Clean canonical URLs (already have `/entry/[slug]`)
 
 ### 4.3 Social Sharing (OG/Twitter Cards)
 
-- Dynamic OG images per entry (entry type + title + tool badges rendered as image)
+- Dynamic OG images per entry (entry type + title + tool badges rendered as image). Implementation: use `@vercel/og` (Edge runtime image generation) to render entry metadata as a 1200x630 image. This is a non-trivial task — allocate time for template design and testing across social platforms.
 - Proper `og:title`, `og:description`, `og:image` meta tags
-- Twitter card markup
+- Twitter card markup (`twitter:card=summary_large_image`)
 - Critical for HN/Twitter/Reddit sharing — good preview cards drive clicks
 
 ### 4.4 Trust Signals
@@ -187,11 +196,14 @@ Share an entry URL on Twitter/HN and it renders a clean, professional preview ca
 
 **Goal:** Final hardening before public launch. Catch anything that would embarrass you on the HN front page.
 
-### 5.1 Error Monitoring
+### 5.1 Error Monitoring & Traffic Resilience
 
 - Basic error tracking (Vercel Analytics or Sentry free tier)
 - Pipeline failure alerts — know within minutes if ingestion breaks
 - Cron job health: verify it's actually firing on schedule
+- **Rate limiting:** Add rate limiting on public API routes (`/api/feed`, `/api/entries`) to handle HN traffic spikes. Use Vercel's Edge Middleware or a simple in-memory rate limiter. Target: graceful degradation under load, not hard failures.
+- **Caching:** Aggressive caching on the feed API (1-5 minute TTL) and entry detail pages (long cache with revalidation on publish). ISR (Incremental Static Regeneration) for entry detail pages.
+- **Admin protection:** Ensure admin routes are not exposed to public traffic beyond the auth gate
 
 ### 5.2 Content Buffer
 
