@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StatusDashboard } from "@/components/admin/status-dashboard";
 
 export default function AdminLayout({
   children,
@@ -23,7 +24,10 @@ export default function AdminLayout({
           </Link>
         </div>
       </nav>
-      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-5xl px-6 py-8">
+        <StatusDashboard />
+        {children}
+      </main>
     </div>
   );
 }
