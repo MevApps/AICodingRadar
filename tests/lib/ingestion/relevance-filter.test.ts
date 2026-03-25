@@ -1,13 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { filterRelevance } from "@/lib/ingestion/relevance-filter";
 
-vi.mock("@/lib/ai/client", () => ({
-  getAnthropicClient: () => ({
-    messages: {
-      create: vi.fn().mockResolvedValue({
-        content: [{ type: "text", text: '{"score": 0.9, "reason": "Directly about AI coding tools"}' }],
-      }),
-    },
+vi.mock("@/lib/ai/providers", () => ({
+  chatWithFallback: vi.fn().mockResolvedValue({
+    text: '{"score": 0.9, "reason": "Directly about AI coding tools"}',
+    inputTokens: 10,
+    outputTokens: 5,
   }),
 }));
 

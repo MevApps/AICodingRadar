@@ -1,16 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { checkSupersession, findSupersessionCandidates } from "@/lib/ingestion/supersession";
 
-vi.mock("@/lib/ai/client", () => ({
-  getAnthropicClient: () => ({
-    messages: {
-      create: vi.fn().mockResolvedValue({
-        content: [{
-          type: "text",
-          text: '{"supersedes": true, "reason": "New entry provides updated information"}',
-        }],
-      }),
-    },
+vi.mock("@/lib/ai/providers", () => ({
+  chatWithFallback: vi.fn().mockResolvedValue({
+    text: '{"supersedes": true, "reason": "New entry provides updated information"}',
+    inputTokens: 10,
+    outputTokens: 5,
   }),
 }));
 

@@ -1,23 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
 import { structureEntry } from "@/lib/ingestion/structurer";
 
-vi.mock("@/lib/ai/client", () => ({
-  getAnthropicClient: () => ({
-    messages: {
-      create: vi.fn().mockResolvedValue({
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            type: "tip",
-            title: "Claude Code Background Agents",
-            summary: "Claude Code now supports background agents for running tasks.",
-            body: "Full guide on using background agents...",
-            tools: ["Claude Code"],
-            categories: ["Code Generation"],
-          }),
-        }],
-      }),
-    },
+vi.mock("@/lib/ai/providers", () => ({
+  chatWithFallback: vi.fn().mockResolvedValue({
+    text: JSON.stringify({
+      type: "tip",
+      title: "Claude Code Background Agents",
+      summary: "Claude Code now supports background agents for running tasks.",
+      body: "Full guide on using background agents...",
+      tools: ["Claude Code"],
+      categories: ["Code Generation"],
+    }),
+    inputTokens: 10,
+    outputTokens: 50,
   }),
 }));
 

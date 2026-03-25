@@ -1,6 +1,5 @@
-import { getAnthropicClient } from "@/lib/ai/client";
+import { chatWithFallback } from "@/lib/ai/providers";
 import { SUPERSESSION_PROMPT } from "@/lib/ai/prompts";
-import { extractJson } from "@/lib/utils/json";
 import type { RunTracker } from "./tracker";
 
 interface SupersessionResult {
@@ -13,35 +12,21 @@ export async function checkSupersession(
   existingEntry: { title: string; body: string },
   tracker?: RunTracker
 ): Promise<SupersessionResult> {
-  const client = getAnthropicClient();
+  const result = await chatWithFallback(
+    {
+      system: SUPERSESSION_PROMPT,
+      message: `NEW ENTRY:\nTitle: ${newEntry.title}\nBody: ${newEntry.body}\n\nEXISTING ENTRY:\nTitle: ${existingEntry.title}\nBody: ${existingEntry.body}`,
+      maxTokens: 512,
+    },
+    tracker
+      ? (usage, provider) => tracker.recordUsage(usage, provider)
+      : undefined
+  );
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 512,
-    system: SUPERSESSION_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: `NEW ENTRY:\nTitle: ${newEntry.title}\nBody: ${newEntry.body}\n\nEXISTING ENTRY:\nTitle: ${existingEntry.title}\nBody: ${existingEntry.body}`,
-      },
-    ],
-  });
-
-  if (tracker && response.usage) {
-    tracker.recordUsage({
-      inputTokens: response.usage.input_tokens,
-      outputTokens: response.usage.output_tokens,
-    });
-  }
-
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
-  const parsed = extractJson(text);
-  return {
-    supersedes: Boolean(parsed.supersedes),
-    reason: String(parsed.reason ?? ""),
-  };
+  return JSON.parse(result.text);
 }
 
+// Keep findSupersessionCandidates EXACTLY as-is — it's a pure function, no AI call
 export function findSupersessionCandidates(
   newEntry: { tools: string[]; categories: string[] },
   existingEntries: { id: string; tools: string[]; categories: string[] }[],
