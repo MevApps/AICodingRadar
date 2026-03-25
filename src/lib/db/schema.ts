@@ -119,6 +119,20 @@ export const triggeredByEnum = pgEnum("triggered_by", [
   "cron", "manual",
 ]);
 
+export const settings = pgTable(
+  "settings",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    key: text("key").notNull().unique(),
+    value: text("value").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("settings_key_idx").on(table.key),
+  ]
+);
+
 export const ingestionRuns = pgTable(
   "ingestion_runs",
   {

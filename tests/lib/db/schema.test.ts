@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { entries, sources, entrySupersessions, ingestionRuns } from "@/lib/db/schema";
+import { entries, sources, entrySupersessions, ingestionRuns, settings } from "@/lib/db/schema";
 
 describe("entries schema", () => {
   it("has required columns", () => {
@@ -38,6 +38,17 @@ describe("entrySupersessions schema", () => {
     const columns = Object.keys(entrySupersessions);
     expect(columns).toContain("supersedingEntryId");
     expect(columns).toContain("supersededEntryId");
+  });
+});
+
+describe("settings schema", () => {
+  it("has required columns", () => {
+    const columns = Object.keys(settings);
+    expect(columns).toContain("id");
+    expect(columns).toContain("key");
+    expect(columns).toContain("value");
+    expect(columns).toContain("createdAt");
+    expect(columns).toContain("updatedAt");
   });
 });
 
