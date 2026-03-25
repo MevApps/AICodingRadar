@@ -1,5 +1,6 @@
 import { chatWithFallback } from "@/lib/ai/providers";
 import { STRUCTURER_PROMPT } from "@/lib/ai/prompts";
+import { parseJsonResponse } from "@/lib/utils/parse-json";
 import type { EntryType } from "@/types";
 import type { RunTracker } from "./tracker";
 
@@ -27,5 +28,5 @@ export async function structureEntry(
       : undefined
   );
 
-  return JSON.parse(result.text);
+  return parseJsonResponse(result.text);
 }

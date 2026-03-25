@@ -1,5 +1,6 @@
 import { chatWithFallback } from "@/lib/ai/providers";
 import { SUPERSESSION_PROMPT } from "@/lib/ai/prompts";
+import { parseJsonResponse } from "@/lib/utils/parse-json";
 import type { RunTracker } from "./tracker";
 
 interface SupersessionResult {
@@ -23,7 +24,7 @@ export async function checkSupersession(
       : undefined
   );
 
-  return JSON.parse(result.text);
+  return parseJsonResponse(result.text);
 }
 
 // Keep findSupersessionCandidates EXACTLY as-is — it's a pure function, no AI call

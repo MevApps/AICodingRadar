@@ -1,5 +1,6 @@
 import { chatWithFallback } from "@/lib/ai/providers";
 import { RELEVANCE_FILTER_PROMPT } from "@/lib/ai/prompts";
+import { parseJsonResponse } from "@/lib/utils/parse-json";
 import type { RunTracker } from "./tracker";
 
 interface RelevanceResult {
@@ -22,6 +23,6 @@ export async function filterRelevance(
       : undefined
   );
 
-  const parsed = JSON.parse(result.text);
+  const parsed = parseJsonResponse(result.text);
   return { score: parsed.score, reason: parsed.reason };
 }
