@@ -7,8 +7,19 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-body" });
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-heading" });
 
 export const metadata: Metadata = {
-  title: "Coding Radar",
+  title: {
+    default: "Coding Radar",
+    template: "%s — Coding Radar",
+  },
   description: "Stay sharp on AI coding tools — curated, structured, evergreen.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? "https://codingradar.dev"),
+  openGraph: {
+    type: "website",
+    siteName: "Coding Radar",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

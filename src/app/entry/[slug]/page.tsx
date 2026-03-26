@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEntryBySlug } from "@/lib/feed/queries";
@@ -9,11 +10,30 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const entry = await getEntryBySlug(slug);
-  if (!entry) return { title: "Not Found" };
-  return { title: entry.title, description: entry.summary };
+  if (!entry) return { title: "Not found" };
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://codingradar.dev";
+  const tools: string[] = Array.isArray(entry.tools) ? (entry.tools as string[]) : [];
+
+  return {
+    title: entry.title,
+    description: entry.summary,
+    openGraph: {
+      title: entry.title,
+      description: entry.summary ?? undefined,
+      type: "article",
+      publishedTime: entry.publishedAt?.toISOString(),
+      images: [`${baseUrl}/api/og?title=${encodeURIComponent(entry.title)}&type=${entry.type}&tools=${encodeURIComponent(tools.join(","))}`],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: entry.title,
+      description: entry.summary ?? undefined,
+    },
+  };
 }
 
 export default async function EntryPage({ params }: Props) {
