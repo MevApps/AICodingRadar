@@ -16,5 +16,7 @@ export async function GET(request: NextRequest) {
 
   const result = await getFeedEntries({ cursor, limit, filters, sort });
 
-  return NextResponse.json(result);
+  const response = NextResponse.json(result);
+  response.headers.set("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
+  return response;
 }

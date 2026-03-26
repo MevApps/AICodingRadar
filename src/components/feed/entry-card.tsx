@@ -28,7 +28,8 @@ export function EntryCard({ entry }: { entry: Entry }) {
   const borderClass = TYPE_BORDERS[entry.type] ?? "";
 
   return (
-    <Link href={`/entry/${entry.slug}`} className="block">
+    <article aria-label={entry.title}>
+      <Link href={`/entry/${entry.slug}`} className="block" aria-label={entry.title}>
       <Card interactive className={borderClass}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -58,6 +59,7 @@ export function EntryCard({ entry }: { entry: Entry }) {
           </div>
         </div>
       </Card>
-    </Link>
+      </Link>
+    </article>
   );
 }
