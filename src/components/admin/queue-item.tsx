@@ -52,23 +52,41 @@ export function QueueItem({ entry, onAction, onEdit, isEditing, onSaveEdit, onCa
             ))}
           </div>
 
-          {entry.sources.length > 0 && (
-            <div className="mt-2">
-              <span className="text-xs text-gray-500">Sources: </span>
-              {entry.sources.map((src, i) => (
-                <a
-                  key={i}
-                  href={src}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline"
-                >
-                  {new URL(src).hostname}
-                  {i < entry.sources.length - 1 ? ", " : ""}
-                </a>
-              ))}
-            </div>
-          )}
+          <div className="mt-2 flex items-center gap-3">
+            {entry.sources.length > 0 && (
+              <div>
+                <span className="text-xs text-gray-500">Source: </span>
+                {entry.sources.map((src, i) => (
+                  <a
+                    key={i}
+                    href={src}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    {new URL(src).hostname}
+                    {i < entry.sources.length - 1 ? ", " : ""}
+                  </a>
+                ))}
+              </div>
+            )}
+            {entry.createdAt && (
+              <span className="text-xs text-gray-400">
+                {new Date(entry.createdAt).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            )}
+            {/* Show engagement data if present in body */}
+            {entry.body.includes("Engagement:") && (
+              <span className="text-xs font-medium text-amber-600">
+                {entry.body.split("Engagement: ")[1]?.split("\n")[0]}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-2">

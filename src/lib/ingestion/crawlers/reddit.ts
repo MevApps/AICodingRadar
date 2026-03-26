@@ -25,6 +25,8 @@ export class RedditCrawler implements Crawler {
         title: child.data.title,
         content: child.data.selftext || child.data.url || "",
         publishedAt: new Date(child.data.created_utc * 1000),
+        score: child.data.score ?? 0,
+        comments: child.data.num_comments ?? 0,
       }));
 
       return { items, errors: [] };

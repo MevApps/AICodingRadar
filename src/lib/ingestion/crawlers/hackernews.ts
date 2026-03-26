@@ -29,6 +29,8 @@ export class HackerNewsCrawler implements Crawler {
           title: s.title,
           content: s.text || "",
           publishedAt: new Date(s.time * 1000),
+          score: s.score ?? 0,
+          comments: s.descendants ?? 0,
         }));
 
       return { items, errors: [] };

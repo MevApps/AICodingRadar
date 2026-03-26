@@ -103,6 +103,8 @@ export const rawItems = pgTable(
     title: text("title").notNull(),
     content: text("content").notNull(),
     relevanceScore: real("relevance_score"),
+    score: integer("score"),
+    comments: integer("comments"),
     processed: boolean("processed").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

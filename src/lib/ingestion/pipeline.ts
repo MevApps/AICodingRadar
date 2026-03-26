@@ -14,6 +14,7 @@ import { findSupersessionCandidates, checkSupersession } from "./supersession";
 import { generateEmbedding } from "@/lib/embeddings/client";
 import { isDuplicate } from "./dedup";
 import { generateSlug } from "@/lib/utils/slug";
+import { cleanContent, isLowQuality } from "@/lib/utils/clean-content";
 import type { Crawler } from "./crawlers/types";
 import type { SourceType } from "@/types";
 
@@ -90,7 +91,17 @@ export async function processSource(
     .filter((e): e is typeof e & { embedding: number[] } => e.embedding !== null);
 
   // 2. Deduplicate by URL and store raw items
-  for (const item of crawlResult.items) {
+  for (const rawItem of crawlResult.items) {
+    // Clean content and title
+    const item = {
+      ...rawItem,
+      title: cleanContent(rawItem.title),
+      content: cleanContent(rawItem.content),
+    };
+
+    // Quality filter — skip low-quality noise
+    if (isLowQuality(item)) continue;
+
     try {
       const inserted = await db
         .insert(rawItems)
@@ -99,6 +110,8 @@ export async function processSource(
           externalUrl: item.externalUrl,
           title: item.title,
           content: item.content,
+          score: item.score,
+          comments: item.comments,
         })
         .onConflictDoNothing()
         .returning();
@@ -123,6 +136,12 @@ export async function processSource(
         const slug = generateSlug(item.title);
         const summary = item.content.slice(0, 300) + (item.content.length > 300 ? "..." : "");
 
+        // Build engagement info for the body
+        const engagementParts: string[] = [];
+        if (item.score !== undefined && item.score > 0) engagementParts.push(`${item.score} points`);
+        if (item.comments !== undefined && item.comments > 0) engagementParts.push(`${item.comments} comments`);
+        const engagementLine = engagementParts.length > 0 ? `\n\n---\nEngagement: ${engagementParts.join(" · ")}` : "";
+
         try {
           await db.insert(entries).values({
             type: "tip",
@@ -131,7 +150,7 @@ export async function processSource(
             title: item.title,
             slug: slug + "-" + Date.now().toString(36),
             summary: summary || "Pending review",
-            body: item.content || item.title,
+            body: (item.content || item.title) + engagementLine,
             tools: [],
             categories: [],
             sources: [item.externalUrl],
