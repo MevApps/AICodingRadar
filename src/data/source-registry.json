@@ -1,13 +1,5 @@
 [
   {
-    "url": "https://simonwillison.net/atom/everything/",
-    "type": "rss",
-    "name": "Simon Willison's Weblog",
-    "description": "Prolific AI tools commentary, tutorials, and tool reviews",
-    "tools": ["Claude Code", "Copilot", "ChatGPT", "Cursor"],
-    "categories": ["Code Generation", "Architecture"]
-  },
-  {
     "url": "https://github.com/anthropics/claude-code",
     "type": "github",
     "name": "Claude Code Releases",
@@ -16,10 +8,18 @@
     "categories": ["Code Generation", "Testing", "Debugging"]
   },
   {
+    "url": "https://github.com/anthropics/anthropic-cookbook",
+    "type": "github",
+    "name": "Anthropic Cookbook",
+    "description": "Official Anthropic code examples, guides, and best practices",
+    "tools": ["Claude Code"],
+    "categories": ["Code Generation", "Architecture"]
+  },
+  {
     "url": "https://github.com/getcursor/cursor",
     "type": "github",
     "name": "Cursor Releases",
-    "description": "Cursor IDE releases and changelogs",
+    "description": "Official Cursor IDE releases and changelogs",
     "tools": ["Cursor"],
     "categories": ["Code Generation", "Code Review"]
   },
@@ -27,56 +27,24 @@
     "url": "https://github.blog/feed/",
     "type": "rss",
     "name": "GitHub Blog",
-    "description": "GitHub product updates including Copilot features",
+    "description": "Official GitHub product updates including Copilot",
     "tools": ["Copilot"],
     "categories": ["Code Generation", "Code Review", "DevOps"]
   },
   {
-    "url": "https://www.reddit.com/r/cursor",
-    "type": "reddit",
-    "name": "r/cursor",
-    "description": "Community discussion about Cursor IDE",
-    "tools": ["Cursor"],
-    "categories": ["Code Generation", "Code Review"]
-  },
-  {
-    "url": "https://www.reddit.com/r/ClaudeAI",
-    "type": "reddit",
-    "name": "r/ClaudeAI",
-    "description": "Community discussion about Claude and Claude Code",
-    "tools": ["Claude Code"],
-    "categories": ["Code Generation", "Testing"]
-  },
-  {
-    "url": "https://www.reddit.com/r/LocalLLaMA",
-    "type": "reddit",
-    "name": "r/LocalLLaMA",
-    "description": "Local AI model discussion including coding use cases",
-    "tools": ["Aider", "Cline"],
-    "categories": ["Code Generation", "Architecture"]
-  },
-  {
-    "url": "https://www.reddit.com/r/ChatGPTPro",
-    "type": "reddit",
-    "name": "r/ChatGPTPro",
-    "description": "Advanced ChatGPT usage including coding workflows",
-    "tools": ["Copilot", "ChatGPT"],
-    "categories": ["Code Generation"]
-  },
-  {
-    "url": "https://news.ycombinator.com",
-    "type": "hackernews",
-    "name": "Hacker News",
-    "description": "Tech news with strong AI coding tool coverage",
-    "tools": ["Claude Code", "Cursor", "Copilot"],
+    "url": "https://developers.googleblog.com/feeds/posts/default",
+    "type": "rss",
+    "name": "Google Developers Blog",
+    "description": "Official Google developer updates — Gemini, AI Studio, Gemini CLI",
+    "tools": ["Gemini"],
     "categories": ["Code Generation", "Architecture", "DevOps"]
   },
   {
-    "url": "https://www.anthropic.com/blog/rss",
+    "url": "https://blog.google/technology/ai/rss",
     "type": "rss",
-    "name": "Anthropic Blog",
-    "description": "Official Anthropic announcements and research",
-    "tools": ["Claude Code"],
+    "name": "Google AI Blog",
+    "description": "Official Google AI announcements and research",
+    "tools": ["Gemini"],
     "categories": ["Code Generation", "Architecture"]
   },
   {
@@ -91,7 +59,7 @@
     "url": "https://github.com/paul-gauthier/aider",
     "type": "github",
     "name": "Aider Releases",
-    "description": "Aider AI coding assistant releases",
+    "description": "Official Aider AI coding assistant releases",
     "tools": ["Aider"],
     "categories": ["Code Generation", "Code Review"]
   },
@@ -99,7 +67,7 @@
     "url": "https://github.com/cline/cline",
     "type": "github",
     "name": "Cline Releases",
-    "description": "Cline AI coding assistant releases",
+    "description": "Official Cline AI coding assistant releases",
     "tools": ["Cline"],
     "categories": ["Code Generation"]
   },
@@ -107,64 +75,48 @@
     "url": "https://codeium.com/blog/rss",
     "type": "rss",
     "name": "Codeium Blog",
-    "description": "Windsurf and Codeium product updates",
+    "description": "Official Windsurf and Codeium product updates",
     "tools": ["Windsurf"],
     "categories": ["Code Generation", "Code Review"]
-  },
-  {
-    "url": "https://sourcegraph.com/blog/rss",
-    "type": "rss",
-    "name": "Sourcegraph Blog",
-    "description": "Cody AI assistant and code intelligence updates",
-    "tools": ["Cody"],
-    "categories": ["Code Generation", "Code Review", "Architecture"]
-  },
-  {
-    "url": "https://lilianweng.github.io/index.xml",
-    "type": "rss",
-    "name": "Lilian Weng's Blog",
-    "description": "In-depth AI research posts with coding implications",
-    "tools": [],
-    "categories": ["Architecture"]
-  },
-  {
-    "url": "https://www.latent.space/feed",
-    "type": "rss",
-    "name": "Latent Space Podcast",
-    "description": "AI engineering podcast covering coding tools and workflows",
-    "tools": ["Claude Code", "Cursor", "Copilot"],
-    "categories": ["Code Generation", "Architecture"]
-  },
-  {
-    "url": "https://news.smol.ai/rss.xml",
-    "type": "rss",
-    "name": "AI News (smol.ai)",
-    "description": "Weekday recaps of top AI engineering news from Twitter, Reddit, and Discord",
-    "tools": ["Claude Code", "Cursor", "Copilot"],
-    "categories": ["Code Generation", "Architecture", "DevOps"]
-  },
-  {
-    "url": "https://www.reddit.com/r/singularity",
-    "type": "reddit",
-    "name": "r/singularity",
-    "description": "AI breakthroughs and frontier model developments",
-    "tools": ["Claude Code", "Copilot", "ChatGPT"],
-    "categories": ["Code Generation", "Architecture"]
-  },
-  {
-    "url": "https://blog.google/technology/ai/rss",
-    "type": "rss",
-    "name": "Google AI Blog",
-    "description": "Google AI product launches including Gemini and AI Studio",
-    "tools": ["Gemini"],
-    "categories": ["Code Generation", "Architecture"]
   },
   {
     "url": "https://github.com/continuedev/continue",
     "type": "github",
     "name": "Continue Releases",
-    "description": "Continue AI coding assistant for VS Code and JetBrains",
+    "description": "Official Continue AI coding assistant for VS Code and JetBrains",
     "tools": ["Continue"],
     "categories": ["Code Generation", "Code Review"]
+  },
+  {
+    "url": "https://github.com/TabbyML/tabby",
+    "type": "github",
+    "name": "Tabby Releases",
+    "description": "Official Tabby self-hosted AI coding assistant releases",
+    "tools": ["Tabby"],
+    "categories": ["Code Generation"]
+  },
+  {
+    "url": "https://github.com/sourcegraph/cody",
+    "type": "github",
+    "name": "Cody Releases",
+    "description": "Official Sourcegraph Cody AI coding assistant releases",
+    "tools": ["Cody"],
+    "categories": ["Code Generation", "Code Review"]
+  },
+  {
+    "url": "https://github.com/google-gemini/gemini-cli",
+    "type": "github",
+    "name": "Gemini CLI Releases",
+    "description": "Official Google Gemini CLI releases",
+    "tools": ["Gemini"],
+    "categories": ["Code Generation", "Testing"]
+  },
+  {
+    "url": "https://github.com/openai/codex",
+    "type": "github",
+    "name": "OpenAI Codex CLI Releases",
+    "description": "Official OpenAI Codex CLI releases",
+    "tools": ["Copilot"],
+    "categories": ["Code Generation"]
   }
 ]
