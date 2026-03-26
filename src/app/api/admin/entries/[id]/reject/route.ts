@@ -11,7 +11,7 @@ export async function POST(
 
   await db
     .update(entries)
-    .set({ status: "rejected" })
+    .set({ status: "rejected", confidence: "verified" })
     .where(eq(entries.id, id));
 
   return NextResponse.json({ success: true });
