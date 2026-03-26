@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEntryBySlug } from "@/lib/feed/queries";
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { EntrySources } from "@/components/entry/entry-sources";
 
@@ -45,7 +45,7 @@ export default async function EntryPage({ params }: Props) {
         <article>
           <header className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <Badge variant={(entry.type as keyof typeof import("@/components/ui/badge")) ?? "default"}>
+              <Badge variant={(entry.type as "tip" | "comparison" | "guide" | "breaking" | "default") ?? "default"}>
                 {entry.type}
               </Badge>
               {publishedAt && (
