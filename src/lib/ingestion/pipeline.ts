@@ -3,6 +3,7 @@ import { rawItems, entries, entrySupersessions, sources } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm";
 import { RunTracker } from "./tracker";
 import { PipelineLogger } from "./logger";
+import { ingestionEvents } from "./events";
 import { RssCrawler } from "./crawlers/rss";
 import { GitHubCrawler } from "./crawlers/github";
 import { RedditCrawler } from "./crawlers/reddit";
@@ -104,6 +105,11 @@ export async function processSource(
       if (inserted.length === 0) continue; // Duplicate URL, skip
 
       // 3. Relevance filter
+      ingestionEvents.emit("item:scoring", {
+        title: item.title,
+        sourceName: source.name,
+      });
+
       const relevance = await filterRelevance({
         title: item.title,
         content: item.content,
@@ -116,10 +122,22 @@ export async function processSource(
 
       relevanceScores.push(relevance.score);
 
+      ingestionEvents.emit("item:scored", {
+        title: item.title,
+        score: relevance.score,
+        relevant: relevance.score >= source.relevanceThreshold,
+        sourceName: source.name,
+      });
+
       if (relevance.score < source.relevanceThreshold) continue;
       result.relevant++;
 
       // 4. Structure
+      ingestionEvents.emit("item:structuring", {
+        title: item.title,
+        sourceName: source.name,
+      });
+
       const structured = await structureEntry({
         title: item.title,
         content: item.content,
@@ -155,6 +173,13 @@ export async function processSource(
       }).returning();
 
       result.structured++;
+
+      ingestionEvents.emit("item:structured", {
+        title: structured.title,
+        type: structured.type,
+        tools: structured.tools,
+        sourceName: source.name,
+      });
 
       // 7. Supersession check
       const activeEntries = await db
@@ -195,6 +220,11 @@ export async function processSource(
         .set({ processed: true })
         .where(eq(rawItems.id, inserted[0].id));
     } catch (error) {
+      ingestionEvents.emit("item:error", {
+        title: item.title,
+        error: (error as Error).message,
+        sourceName: source.name,
+      });
       result.errors.push(
         `Error processing item "${item.title}": ${(error as Error).message}`
       );

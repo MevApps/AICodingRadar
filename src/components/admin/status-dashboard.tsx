@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MetricCard } from "./metric-card";
 import { IngestionBar } from "./ingestion-bar";
 import { RunHistory } from "./run-history";
+import { LiveIngestionLog } from "./live-ingestion-log";
 
 interface DashboardStats {
   queue: { count: number };
@@ -26,6 +27,7 @@ export function StatusDashboard() {
     return false;
   });
   const [pollingRunId, setPollingRunId] = useState<string | null>(null);
+  const [showLiveLog, setShowLiveLog] = useState(false);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -70,6 +72,7 @@ export function StatusDashboard() {
     if (res.ok) {
       const data = await res.json();
       setPollingRunId(data.runId);
+      setShowLiveLog(true);
     }
     fetchStats();
   }
@@ -176,6 +179,7 @@ export function StatusDashboard() {
           <RunHistory runs={stats.recentRuns} />
         </div>
       )}
+      <LiveIngestionLog visible={showLiveLog} onClose={() => setShowLiveLog(false)} />
     </div>
   );
 }

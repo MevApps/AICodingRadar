@@ -5,6 +5,7 @@ import { eq, gte, sql } from "drizzle-orm";
 import { processSource } from "@/lib/ingestion/pipeline";
 import { RunTracker } from "@/lib/ingestion/tracker";
 import { PipelineLogger } from "@/lib/ingestion/logger";
+import { ingestionEvents } from "@/lib/ingestion/events";
 
 export async function POST() {
   // Concurrency guard
@@ -68,8 +69,15 @@ async function executeIngestion(runId: string) {
       .from(sources)
       .where(eq(sources.enabled, true));
 
+    ingestionEvents.emit("run:start", {
+      runId,
+      totalSources: enabledSources.length,
+      sourceNames: enabledSources.map(s => s.name),
+    });
+
     for (const source of enabledSources) {
       try {
+        ingestionEvents.emit("source:start", { sourceId: source.id, sourceName: source.name });
         logger.startSource(source.id, source.name);
         const result = await processSource(
           {
@@ -89,6 +97,15 @@ async function executeIngestion(runId: string) {
         totalStructured += result.structured;
         totalSupersessions += result.supersessionsFound;
         allErrors.push(...result.errors);
+
+        ingestionEvents.emit("source:complete", {
+          sourceId: source.id,
+          sourceName: source.name,
+          crawled: result.crawled,
+          relevant: result.relevant,
+          structured: result.structured,
+          errors: result.errors.length,
+        });
 
         await db
           .update(sources)
@@ -111,6 +128,12 @@ async function executeIngestion(runId: string) {
           })
           .where(eq(ingestionRuns.id, runId));
       } catch (error) {
+        ingestionEvents.emit("source:error", {
+          sourceId: source.id,
+          sourceName: source.name,
+          error: (error as Error).message,
+        });
+
         await db
           .update(sources)
           .set({ errorCount: source.errorCount + 1 })
@@ -121,6 +144,17 @@ async function executeIngestion(runId: string) {
     }
 
     const usage = tracker.getUsage();
+
+    ingestionEvents.emit("run:complete", {
+      runId,
+      sourcesProcessed,
+      itemsCrawled: totalCrawled,
+      itemsRelevant: totalRelevant,
+      itemsStructured: totalStructured,
+      errors: allErrors.length,
+      cost: usage.costUsd,
+    });
+
     await db
       .update(ingestionRuns)
       .set({
