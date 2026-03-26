@@ -27,11 +27,11 @@ export function FeedSummary() {
   if (!summary) return null;
 
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-      <h2 className="text-sm font-semibold text-blue-900">
+    <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
+      <h2 className="text-sm font-semibold text-foreground">
         Since you&apos;ve been gone
       </h2>
-      <p className="mt-1 text-sm text-blue-800">{summary}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{summary}</p>
     </div>
   );
 }

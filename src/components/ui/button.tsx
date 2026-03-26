@@ -1,10 +1,10 @@
 import { type ButtonHTMLAttributes } from "react";
 
 const variants = {
-  primary: "bg-black text-white hover:bg-gray-800",
-  secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
+  primary: "bg-foreground text-background hover:opacity-90",
+  secondary: "bg-muted text-foreground hover:bg-border",
   danger: "bg-red-600 text-white hover:bg-red-700",
-  ghost: "text-gray-600 hover:bg-gray-100",
+  ghost: "text-muted-foreground hover:bg-muted",
 } as const;
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
