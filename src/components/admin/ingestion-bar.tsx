@@ -51,12 +51,18 @@ export function IngestionBar({
     return `${diffMin} min`;
   }
 
-  function getRelativeTime(dateStr: string): string {
+  function getRelativeTime(run: IngestionRun): string {
+    // Use completedAt if available, fall back to startedAt
+    const dateStr = run.completedAt ?? run.startedAt;
     const diff = Date.now() - new Date(dateStr).getTime();
     const minutes = Math.round(diff / 60000);
+    if (minutes < 0) return "just now"; // guard against clock skew
+    if (minutes < 1) return "just now";
     if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.round(minutes / 60);
-    return `${hours}h ago`;
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.round(hours / 24);
+    return `${days}d ago`;
   }
 
   return (
@@ -74,7 +80,7 @@ export function IngestionBar({
                 }`}
               />
               <span className="text-sm font-medium">
-                {getRelativeTime(lastRun.startedAt)}
+                {getRelativeTime(lastRun)}
               </span>
               <span className="text-xs text-gray-500">
                 {lastRun.itemsCrawled} crawled, {lastRun.itemsRelevant} relevant,{" "}
