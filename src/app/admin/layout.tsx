@@ -7,22 +7,22 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="border-b bg-white px-6 py-3">
+    <div className="min-h-screen bg-muted">
+      <nav className="border-b bg-background px-6 py-3">
         <div className="mx-auto flex max-w-5xl items-center gap-6">
-          <Link href="/admin/queue" className="text-sm font-semibold">
+          <Link href="/admin/queue" className="font-heading text-sm font-semibold text-foreground">
             Coding Radar Admin
           </Link>
-          <Link href="/admin/queue" className="text-sm text-gray-600 hover:text-black">
+          <Link href="/admin/queue" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Review Queue
           </Link>
-          <Link href="/admin/sources" className="text-sm text-gray-600 hover:text-black">
+          <Link href="/admin/sources" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Sources
           </Link>
-          <Link href="/admin/settings" className="text-sm text-gray-600 hover:text-black">
+          <Link href="/admin/settings" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Settings
           </Link>
-          <Link href="/" className="ml-auto text-sm text-gray-400 hover:text-black">
+          <Link href="/" className="ml-auto text-sm text-muted-foreground hover:text-foreground transition-colors">
             View Feed
           </Link>
         </div>
