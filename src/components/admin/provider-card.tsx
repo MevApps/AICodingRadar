@@ -9,18 +9,27 @@ const MODEL_OPTIONS: Record<string, string[]> = {
   anthropic: ["claude-sonnet-4-6", "claude-haiku-4-5-20251001", "claude-opus-4-6"],
   openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
   gemini: ["gemini-2.0-flash", "gemini-2.5-pro", "gemini-2.5-flash"],
+  openrouter: [
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "google/gemma-3-27b-it:free",
+    "mistralai/mistral-small-3.1-24b-instruct:free",
+    "qwen/qwen3-32b:free",
+  ],
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
   anthropic: "Anthropic",
   openai: "OpenAI",
   gemini: "Google Gemini",
+  openrouter: "OpenRouter (Free)",
 };
 
 const API_KEY_URLS: Record<string, string> = {
   anthropic: "https://console.anthropic.com/settings/keys",
   openai: "https://platform.openai.com/api-keys",
   gemini: "https://aistudio.google.com/apikey",
+  openrouter: "https://openrouter.ai/keys",
 };
 
 interface ProviderCardProps {

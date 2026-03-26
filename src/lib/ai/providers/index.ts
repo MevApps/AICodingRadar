@@ -2,6 +2,7 @@ import { getSetting } from "@/lib/settings";
 import { AnthropicProvider } from "./anthropic";
 import { OpenAIProvider } from "./openai";
 import { GeminiProvider } from "./gemini";
+import { OpenRouterProvider } from "./openrouter";
 import type { AIProvider, ChatParams, ChatResult } from "./types";
 
 export type { AIProvider, ChatParams, ChatResult } from "./types";
@@ -11,13 +12,14 @@ function createProvider(name: string, apiKey: string, model?: string): AIProvide
     case "anthropic": return new AnthropicProvider(apiKey, model ?? "claude-sonnet-4-6");
     case "openai": return new OpenAIProvider(apiKey, model ?? "gpt-4o");
     case "gemini": return new GeminiProvider(apiKey, model ?? "gemini-2.0-flash");
+    case "openrouter": return new OpenRouterProvider(apiKey, model ?? "meta-llama/llama-3.1-8b-instruct:free");
     default: throw new Error(`Unknown provider: ${name}`);
   }
 }
 
 export async function getProvider(): Promise<AIProvider> {
   const priorityJson = await getSetting("provider_priority");
-  const ordered = priorityJson ? JSON.parse(priorityJson) : ["anthropic", "openai", "gemini"];
+  const ordered = priorityJson ? JSON.parse(priorityJson) : ["anthropic", "openai", "gemini", "openrouter"];
 
   for (const name of ordered) {
     const key = await getSetting(`${name}_api_key`);
@@ -63,7 +65,7 @@ export async function chatWithFallback(
   onUsage?: (usage: { inputTokens: number; outputTokens: number }, provider: AIProvider) => void
 ): Promise<ChatResult> {
   const priorityJson = await getSetting("provider_priority");
-  const ordered = priorityJson ? JSON.parse(priorityJson) : ["anthropic", "openai", "gemini"];
+  const ordered = priorityJson ? JSON.parse(priorityJson) : ["anthropic", "openai", "gemini", "openrouter"];
 
   const errors: string[] = [];
 

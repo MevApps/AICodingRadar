@@ -7,6 +7,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   anthropic: "Anthropic",
   openai: "OpenAI",
   gemini: "Google Gemini",
+  openrouter: "OpenRouter (Free)",
 };
 
 interface ProviderPriorityProps {
@@ -39,7 +40,7 @@ export function ProviderPriority({
   }
 
   const embeddingOptions = priority.filter(
-    (p) => configuredProviders.has(p) && p !== "anthropic"
+    (p) => configuredProviders.has(p) && p !== "anthropic" && p !== "openrouter"
   );
 
   return (

@@ -24,4 +24,5 @@ export const PRICING = {
   anthropic: { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
   openai: { input: 2.5 / 1_000_000, output: 10.0 / 1_000_000 },
   gemini: { input: 0.075 / 1_000_000, output: 0.3 / 1_000_000 },
+  openrouter: { input: 0, output: 0 }, // free models
 } as const;

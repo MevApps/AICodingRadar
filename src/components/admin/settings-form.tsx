@@ -4,10 +4,11 @@ import { useEffect, useState, useCallback } from "react";
 import { ProviderCard } from "./provider-card";
 import { ProviderPriority } from "./provider-priority";
 
-const PROVIDERS = ["anthropic", "openai", "gemini"];
+const PROVIDERS = ["anthropic", "openai", "gemini", "openrouter"];
 const DEFAULT_MODELS: Record<string, string> = {
   anthropic: "claude-sonnet-4-6",
   openai: "gpt-4o",
+  openrouter: "meta-llama/llama-3.1-8b-instruct:free",
   gemini: "gemini-2.0-flash",
 };
 

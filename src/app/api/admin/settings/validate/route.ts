@@ -3,6 +3,7 @@ import { getSetting } from "@/lib/settings";
 import { AnthropicProvider } from "@/lib/ai/providers/anthropic";
 import { OpenAIProvider } from "@/lib/ai/providers/openai";
 import { GeminiProvider } from "@/lib/ai/providers/gemini";
+import { OpenRouterProvider } from "@/lib/ai/providers/openrouter";
 
 export async function POST(request: NextRequest) {
   const { provider: providerName } = await request.json();
@@ -25,6 +26,9 @@ export async function POST(request: NextRequest) {
         break;
       case "gemini":
         provider = new GeminiProvider(key, model ?? undefined);
+        break;
+      case "openrouter":
+        provider = new OpenRouterProvider(key, model ?? undefined);
         break;
       default:
         return NextResponse.json({ valid: false, error: "Unknown provider" });

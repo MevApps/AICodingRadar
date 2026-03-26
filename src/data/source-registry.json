@@ -48,10 +48,10 @@
     "categories": ["Code Generation", "Architecture"]
   },
   {
-    "url": "https://openai.com/blog/rss",
-    "type": "rss",
-    "name": "OpenAI Blog",
-    "description": "Official OpenAI announcements including Codex and GPT updates",
+    "url": "https://github.com/openai/openai-cookbook",
+    "type": "github",
+    "name": "OpenAI Cookbook",
+    "description": "Official OpenAI code examples and best practices",
     "tools": ["Copilot", "ChatGPT"],
     "categories": ["Code Generation"]
   },
@@ -72,12 +72,12 @@
     "categories": ["Code Generation"]
   },
   {
-    "url": "https://codeium.com/blog/rss",
-    "type": "rss",
-    "name": "Codeium Blog",
-    "description": "Official Windsurf and Codeium product updates",
-    "tools": ["Windsurf"],
-    "categories": ["Code Generation", "Code Review"]
+    "url": "https://github.com/nicepkg/aide",
+    "type": "github",
+    "name": "Aide Releases",
+    "description": "Official Aide AI coding assistant for VS Code",
+    "tools": ["Aide"],
+    "categories": ["Code Generation"]
   },
   {
     "url": "https://github.com/continuedev/continue",
