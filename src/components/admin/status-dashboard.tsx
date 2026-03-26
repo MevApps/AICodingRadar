@@ -67,8 +67,12 @@ export function StatusDashboard() {
     localStorage.setItem("admin-dashboard-collapsed", String(next));
   }
 
-  async function handleTrigger() {
-    const res = await fetch("/api/admin/ingest", { method: "POST" });
+  async function handleTrigger(manualMode: boolean = false) {
+    const res = await fetch("/api/admin/ingest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ manualMode }),
+    });
     if (res.ok) {
       const data = await res.json();
       setPollingRunId(data.runId);

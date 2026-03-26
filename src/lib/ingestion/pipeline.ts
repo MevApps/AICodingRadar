@@ -51,7 +51,8 @@ function getCrawler(type: SourceType): Crawler {
 export async function processSource(
   source: SourceInput,
   tracker?: RunTracker,
-  logger?: PipelineLogger
+  logger?: PipelineLogger,
+  manualMode: boolean = false
 ): Promise<PipelineResult> {
   const result: PipelineResult = { crawled: 0, relevant: 0, structured: 0, supersessionsFound: 0, errors: [] };
 
@@ -103,6 +104,55 @@ export async function processSource(
         .returning();
 
       if (inserted.length === 0) continue; // Duplicate URL, skip
+
+      if (manualMode) {
+        // Manual mode: skip AI, create draft directly from raw content
+        ingestionEvents.emit("item:scoring", {
+          title: item.title,
+          sourceName: source.name,
+        });
+        ingestionEvents.emit("item:scored", {
+          title: item.title,
+          score: 1.0,
+          relevant: true,
+          sourceName: source.name,
+        });
+
+        result.relevant++;
+
+        const slug = generateSlug(item.title);
+        const summary = item.content.slice(0, 300) + (item.content.length > 300 ? "..." : "");
+
+        try {
+          await db.insert(entries).values({
+            type: "tip",
+            status: "active",
+            confidence: "draft",
+            title: item.title,
+            slug: slug + "-" + Date.now().toString(36),
+            summary: summary || "Pending review",
+            body: item.content || item.title,
+            tools: [],
+            categories: [],
+            sources: [item.externalUrl],
+          });
+        } catch {
+          // Slug collision or other DB error, skip
+          continue;
+        }
+
+        result.structured++;
+
+        ingestionEvents.emit("item:structured", {
+          title: item.title,
+          type: "tip",
+          tools: [],
+          sourceName: source.name,
+        });
+
+        await db.update(rawItems).set({ processed: true }).where(eq(rawItems.id, inserted[0].id));
+        continue;
+      }
 
       // 3. Relevance filter
       ingestionEvents.emit("item:scoring", {

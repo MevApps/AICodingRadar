@@ -25,7 +25,7 @@ interface IngestionBarProps {
   isRunning: boolean;
   budgetExceeded: boolean;
   schedule: string;
-  onTrigger: () => Promise<void>;
+  onTrigger: (manualMode?: boolean) => Promise<void>;
 }
 
 export function IngestionBar({
@@ -37,9 +37,9 @@ export function IngestionBar({
 }: IngestionBarProps) {
   const [triggering, setTriggering] = useState(false);
 
-  async function handleTrigger() {
+  async function handleTrigger(manualMode: boolean = false) {
     setTriggering(true);
-    await onTrigger();
+    await onTrigger(manualMode);
     setTriggering(false);
   }
 
@@ -101,17 +101,28 @@ export function IngestionBar({
           <p className="text-xs text-gray-400">Every hour</p>
         </div>
 
-        <div>
-          {budgetExceeded ? (
-            <Badge variant="breaking">Budget Exceeded</Badge>
-          ) : (
-            <Button
-              size="sm"
-              disabled={isRunning || triggering}
-              onClick={handleTrigger}
-            >
-              {isRunning || triggering ? "Ingesting..." : "Run Now"}
+        <div className="flex gap-2">
+          {isRunning || triggering ? (
+            <Button size="sm" disabled>
+              Ingesting...
             </Button>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                disabled={budgetExceeded}
+                onClick={() => handleTrigger(false)}
+              >
+                AI Ingest
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => handleTrigger(true)}
+              >
+                Manual Ingest
+              </Button>
+            </>
           )}
         </div>
       </div>

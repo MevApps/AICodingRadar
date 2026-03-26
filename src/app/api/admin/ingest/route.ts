@@ -7,7 +7,9 @@ import { RunTracker } from "@/lib/ingestion/tracker";
 import { PipelineLogger } from "@/lib/ingestion/logger";
 import { ingestionEvents } from "@/lib/ingestion/events";
 
-export async function POST() {
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const manualMode = body.manualMode === true;
   // Concurrency guard
   const [running] = await db
     .select()
@@ -48,12 +50,12 @@ export async function POST() {
     .returning();
 
   // Execute pipeline in background (non-blocking)
-  executeIngestion(run.id).catch(console.error);
+  executeIngestion(run.id, manualMode).catch(console.error);
 
   return NextResponse.json({ runId: run.id }, { status: 202 });
 }
 
-async function executeIngestion(runId: string) {
+async function executeIngestion(runId: string, manualMode: boolean = false) {
   const tracker = new RunTracker();
   const logger = new PipelineLogger();
   let sourcesProcessed = 0;
@@ -88,7 +90,8 @@ async function executeIngestion(runId: string) {
             relevanceThreshold: source.relevanceThreshold,
           },
           tracker,
-          logger
+          logger,
+          manualMode
         );
 
         sourcesProcessed++;
