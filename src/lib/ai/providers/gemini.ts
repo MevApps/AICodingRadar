@@ -2,6 +2,19 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AIProvider, ChatParams, ChatResult } from "./types";
 import { PRICING } from "./types";
 
+// Rate limiter for Gemini free tier (5 requests/min for generateContent)
+const GEMINI_MIN_DELAY_MS = 13_000; // ~4.6 req/min, safely under 5/min limit
+let lastGeminiCall = 0;
+
+async function waitForRateLimit(): Promise<void> {
+  const now = Date.now();
+  const elapsed = now - lastGeminiCall;
+  if (elapsed < GEMINI_MIN_DELAY_MS) {
+    await new Promise((resolve) => setTimeout(resolve, GEMINI_MIN_DELAY_MS - elapsed));
+  }
+  lastGeminiCall = Date.now();
+}
+
 export class GeminiProvider implements AIProvider {
   name = "gemini";
   private genAI: GoogleGenerativeAI;
@@ -13,6 +26,7 @@ export class GeminiProvider implements AIProvider {
   }
 
   async chat(params: ChatParams): Promise<ChatResult> {
+    await waitForRateLimit();
     const model = this.genAI.getGenerativeModel({
       model: this.model,
       systemInstruction: params.system,
@@ -29,14 +43,16 @@ export class GeminiProvider implements AIProvider {
   }
 
   async embed(texts: string[]): Promise<number[][]> {
-    const model = this.genAI.getGenerativeModel({ model: "text-embedding-004" });
+    const model = this.genAI.getGenerativeModel({ model: "gemini-embedding-001" });
     const results: number[][] = [];
     for (const text of texts) {
       const result = await model.embedContent(text);
       const embedding = result.embedding.values;
+      // gemini-embedding-001 produces 3072 dims; truncate to 1024 for pgvector column
+      const truncated = embedding.slice(0, 1024);
       const padded = new Array(1024).fill(0);
-      for (let i = 0; i < Math.min(embedding.length, 1024); i++) {
-        padded[i] = embedding[i];
+      for (let i = 0; i < truncated.length; i++) {
+        padded[i] = truncated[i];
       }
       results.push(padded);
     }
