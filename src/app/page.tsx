@@ -2,16 +2,15 @@ import { Suspense } from "react";
 import { FeedSummary } from "@/components/feed/feed-summary";
 import { FeedFilters } from "@/components/feed/feed-filters";
 import { FeedList } from "@/components/feed/feed-list";
+import { FeedHeader } from "@/components/feed/feed-header";
 
 export default function HomePage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Coding Radar</h1>
-        <p className="mt-1 text-gray-600">
-          What changed in AI coding since you last checked
-        </p>
-      </header>
+      <FeedHeader />
+      <p className="mt-1 text-muted-foreground mb-8">
+        What changed in AI coding since you last checked
+      </p>
 
       <div className="space-y-6">
         <Suspense fallback={null}>
