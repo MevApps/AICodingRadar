@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { FeedCard } from "./feed-card";
+import { EntryCard } from "./entry-card";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Entry {
@@ -75,7 +75,7 @@ export function FeedList() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <FeedCard entry={entry} />
+            <EntryCard entry={entry} />
           </motion.div>
         ))}
       </AnimatePresence>
