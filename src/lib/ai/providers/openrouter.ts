@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import type { AIProvider, ChatParams, ChatResult } from "./types";
 
-const DEFAULT_FREE_MODEL = "meta-llama/llama-3.1-8b-instruct:free";
+const DEFAULT_FREE_MODEL = "google/gemma-3-27b-it:free";
 
 export class OpenRouterProvider implements AIProvider {
   name = "openrouter";

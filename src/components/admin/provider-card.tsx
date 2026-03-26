@@ -10,11 +10,12 @@ const MODEL_OPTIONS: Record<string, string[]> = {
   openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
   gemini: ["gemini-2.0-flash", "gemini-2.5-pro", "gemini-2.5-flash"],
   openrouter: [
-    "meta-llama/llama-3.1-8b-instruct:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
     "google/gemma-3-27b-it:free",
+    "google/gemma-3-12b-it:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "meta-llama/llama-3.2-3b-instruct:free",
     "mistralai/mistral-small-3.1-24b-instruct:free",
-    "qwen/qwen3-32b:free",
+    "nousresearch/hermes-3-llama-3.1-405b:free",
   ],
 };
 

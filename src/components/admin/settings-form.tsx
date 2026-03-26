@@ -8,7 +8,7 @@ const PROVIDERS = ["anthropic", "openai", "gemini", "openrouter"];
 const DEFAULT_MODELS: Record<string, string> = {
   anthropic: "claude-sonnet-4-6",
   openai: "gpt-4o",
-  openrouter: "meta-llama/llama-3.1-8b-instruct:free",
+  openrouter: "google/gemma-3-27b-it:free",
   gemini: "gemini-2.0-flash",
 };
 

@@ -12,7 +12,7 @@ function createProvider(name: string, apiKey: string, model?: string): AIProvide
     case "anthropic": return new AnthropicProvider(apiKey, model ?? "claude-sonnet-4-6");
     case "openai": return new OpenAIProvider(apiKey, model ?? "gpt-4o");
     case "gemini": return new GeminiProvider(apiKey, model ?? "gemini-2.0-flash");
-    case "openrouter": return new OpenRouterProvider(apiKey, model ?? "meta-llama/llama-3.1-8b-instruct:free");
+    case "openrouter": return new OpenRouterProvider(apiKey, model ?? "google/gemma-3-27b-it:free");
     default: throw new Error(`Unknown provider: ${name}`);
   }
 }
