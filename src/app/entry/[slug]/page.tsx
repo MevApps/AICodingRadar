@@ -5,6 +5,7 @@ import { getEntryBySlug } from "@/lib/feed/queries";
 import { Badge } from "@/components/ui/badge";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { EntrySources } from "@/components/entry/entry-sources";
+import { RelatedEntries } from "@/components/entry/related-entries";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -119,6 +120,7 @@ export default async function EntryPage({ params }: Props) {
           )}
 
           <EntrySources sources={sources} />
+          <RelatedEntries currentEntryId={entry.id} tools={tools} />
         </article>
       </div>
     </main>
