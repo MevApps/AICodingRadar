@@ -47,12 +47,11 @@ export class OpenRouterProvider implements AIProvider {
 
   async validateKey(): Promise<boolean> {
     try {
-      await this.client.chat.completions.create({
-        model: this.model,
-        max_tokens: 1,
-        messages: [{ role: "user", content: "hi" }],
+      // OpenRouter has a dedicated auth check endpoint
+      const response = await fetch("https://openrouter.ai/api/v1/auth/key", {
+        headers: { Authorization: `Bearer ${this.client.apiKey}` },
       });
-      return true;
+      return response.ok;
     } catch {
       return false;
     }
