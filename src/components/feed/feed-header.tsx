@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function FeedHeader() {
   return (
@@ -18,6 +19,7 @@ export function FeedHeader() {
         >
           RSS
         </Link>
+        <ThemeToggle />
       </nav>
     </header>
   );
