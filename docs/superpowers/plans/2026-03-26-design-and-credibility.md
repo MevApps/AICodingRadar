@@ -6,7 +6,9 @@
 
 **Architecture:** Rename-first approach. Establish the design system (colors, typography, spacing) in Tailwind config and globals.css, then propagate through components. SEO and OG images added last since they depend on the final design. All changes are to the existing Next.js 16 App Router codebase with Tailwind CSS 4.
 
-**Tech Stack:** Next.js 16 (App Router), React 19, Tailwind CSS 4, Framer Motion, @vercel/og (for OG images), lucide-react (icons)
+**Tech Stack:** Next.js 16 (App Router), React 19, Tailwind CSS 4 (CSS-first config via `@theme` blocks), Framer Motion, next/og (built-in OG images), lucide-react (icons)
+
+**IMPORTANT — Tailwind CSS 4 Notes:** This project uses Tailwind v4 with `@tailwindcss/postcss`. In v4: content detection is automatic (no `content` array), dark mode is configured via `@variant dark` in CSS not JS config, theme extensions use `@theme` blocks in CSS, and the JS `tailwind.config.ts` is only loaded if `@config` is explicitly added to CSS. All design tokens MUST go in `globals.css` using `@theme` blocks.
 
 **Spec:** `docs/superpowers/specs/2026-03-25-launch-ready-polish-design.md` (Sections 3-4)
 
@@ -24,13 +26,13 @@
 | `src/components/feed/feed-header.tsx` | Site header with logo, nav, theme toggle |
 | `src/components/feed/entry-card.tsx` | Unified clickable card replacing 4 type-specific cards |
 | `src/components/feed/feed-stats.tsx` | Feed freshness indicator ("247 entries · Updated 2h ago") |
-| `src/components/entry/entry-reading-view.tsx` | Redesigned entry detail layout |
 | `src/components/entry/entry-sources.tsx` | Source attribution component |
 | `src/components/entry/related-entries.tsx` | Related entries sidebar/section |
 | `src/app/about/page.tsx` | About page |
 | `src/app/sitemap.ts` | Dynamic sitemap generation |
 | `src/app/feed.xml/route.ts` | RSS 2.0 feed output |
-| `src/app/api/og/route.tsx` | Dynamic OG image generation via @vercel/og |
+| `src/app/api/og/route.tsx` | Dynamic OG image generation via next/og |
+| `src/app/api/feed/stats/route.ts` | Feed stats API (entry count, last updated) |
 | `src/lib/utils/relative-time.ts` | Relative time formatting logic |
 
 ### Files to Modify
@@ -39,8 +41,7 @@
 |------|-------------|
 | `src/app/layout.tsx` | Rename to "Coding Radar", add fonts, global meta, dark mode class |
 | `src/app/page.tsx` | New header, feed stats, updated layout |
-| `src/app/globals.css` | Design tokens: colors, typography, dark mode variables |
-| `tailwind.config.ts` | Extended color palette, font families |
+| `src/app/globals.css` | Design tokens via `@theme` blocks, dark mode via `@variant`, CSS variables |
 | `src/app/entry/[slug]/page.tsx` | Redesigned reading layout with sources, related entries, supersession |
 | `src/app/admin/layout.tsx` | Rename "AI Coding Radar Admin" → "Coding Radar Admin" |
 | `src/components/feed/feed-list.tsx` | Use new entry-card, add click navigation |
@@ -48,9 +49,10 @@
 | `src/components/feed/feed-filters.tsx` | Mobile-responsive filter pills |
 | `src/components/feed/feed-summary.tsx` | Rename localStorage key, update styling |
 | `src/components/ui/card.tsx` | Dark mode support, hover states |
-| `src/components/ui/badge.tsx` | Refined badge styling |
-| `src/components/ui/button.tsx` | Add outline variant, dark mode |
-| `package.json` | Add @vercel/og dependency |
+| `src/components/ui/badge.tsx` | Dark mode colors using CSS variables |
+| `src/components/ui/button.tsx` | Dark mode colors using CSS variables |
+| `src/components/entry/entry-reading-view.tsx` | Redesign with 65ch width, semantic HTML, supersession context |
+| `src/app/admin/layout.tsx` | Tighten spacing, improve nav styling |
 
 ---
 
@@ -105,19 +107,37 @@ git commit -m "feat: rename AI Coding Radar to Coding Radar"
 ## Task 2: Design System — Colors, Typography, Dark Mode Foundation
 
 **Files:**
-- Modify: `tailwind.config.ts`
 - Modify: `src/app/globals.css`
 - Modify: `src/app/layout.tsx`
 
-**Context:** Establish the design tokens that all subsequent tasks will use. This sets up: a primary accent color (emerald-based for the "radar" vibe), refined neutral grays, heading + body font pairing, and dark mode CSS variables.
+**Context:** Establish design tokens using Tailwind CSS v4's CSS-first approach. All theme extensions go in `globals.css` via `@theme` blocks — NOT in `tailwind.config.ts` (which is not loaded unless `@config` is explicitly added). This sets up: accent colors, neutral palette via CSS variables, heading + body fonts, and dark mode.
 
-- [ ] **Step 1: Update globals.css with design tokens**
+- [ ] **Step 1: Update globals.css with Tailwind v4 design tokens**
 
 Replace `src/app/globals.css` with:
 
 ```css
 @import "tailwindcss";
 
+/* Dark mode via class toggle */
+@variant dark (&:where(.dark, .dark *));
+
+/* Register custom colors and fonts with Tailwind v4 */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+}
+
+/* Light mode tokens */
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
@@ -130,6 +150,20 @@ Replace `src/app/globals.css` with:
   --card-foreground: #0f172a;
 }
 
+/* Dark mode tokens (class-based) */
+.dark {
+  --background: #0c0a09;
+  --foreground: #f5f5f4;
+  --muted: #1c1917;
+  --muted-foreground: #a8a29e;
+  --border: #292524;
+  --accent: #34d399;
+  --accent-foreground: #0c0a09;
+  --card: #1c1917;
+  --card-foreground: #f5f5f4;
+}
+
+/* System preference fallback (when no class is set) */
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
     --background: #0c0a09;
@@ -144,16 +178,19 @@ Replace `src/app/globals.css` with:
   }
 }
 
-.dark {
-  --background: #0c0a09;
-  --foreground: #f5f5f4;
-  --muted: #1c1917;
-  --muted-foreground: #a8a29e;
-  --border: #292524;
-  --accent: #34d399;
-  --accent-foreground: #0c0a09;
-  --card: #1c1917;
-  --card-foreground: #f5f5f4;
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 body {
@@ -163,51 +200,17 @@ body {
 }
 ```
 
-- [ ] **Step 2: Update tailwind.config.ts**
+- [ ] **Step 2: DO NOT modify tailwind.config.ts**
 
-Extend the theme with custom colors referencing CSS variables, and add font families:
+In Tailwind v4, the JS config is NOT loaded unless `@config` is added to the CSS. All theme customization is done in `globals.css` above. Leave `tailwind.config.ts` as-is or delete it.
 
-```typescript
-import type { Config } from "tailwindcss";
-
-const config: Config = {
-  darkMode: "class",
-  content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        muted: { DEFAULT: "var(--muted)", foreground: "var(--muted-foreground)" },
-        border: "var(--border)",
-        accent: { DEFAULT: "var(--accent)", foreground: "var(--accent-foreground)" },
-        card: { DEFAULT: "var(--card)", foreground: "var(--card-foreground)" },
-      },
-      fontFamily: {
-        heading: ["var(--font-heading)", "system-ui", "sans-serif"],
-        body: ["var(--font-body)", "system-ui", "sans-serif"],
-      },
-      maxWidth: {
-        prose: "65ch",
-      },
-    },
-  },
-  plugins: [],
-};
-
-export default config;
-```
-
-- [ ] **Step 3: Update layout.tsx with font imports and dark mode class**
+- [ ] **Step 3: Update layout.tsx with font imports, dark mode script, and metadata**
 
 In `src/app/layout.tsx`:
 - Import a heading font (e.g., `Space_Grotesk` from `next/font/google`) alongside Inter
 - Set CSS variables `--font-heading` and `--font-body` via font className
 - Add `suppressHydrationWarning` to `<html>` for dark mode
+- Add an inline `<script>` in `<head>` to prevent flash of unstyled content (FOUC) on dark mode pages
 
 ```typescript
 import { Inter, Space_Grotesk } from "next/font/google";
@@ -217,7 +220,21 @@ const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-headi
 
 // In the html tag:
 <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
+  <head>
+    <script dangerouslySetInnerHTML={{ __html: `
+      (function() {
+        var t = localStorage.getItem('coding-radar-theme');
+        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else if (t === 'light') {
+          document.documentElement.classList.add('light');
+        }
+      })();
+    `}} />
+  </head>
 ```
+
+This script runs before paint, preventing the flash of light theme for dark-mode users.
 
 - [ ] **Step 4: Verify the app renders correctly**
 
@@ -517,108 +534,25 @@ git commit -m "feat: unified clickable entry card with hover states and relative
 **Files:**
 - Modify: `src/components/feed/feed-filters.tsx`
 
-- [ ] **Step 1: Redesign filters for mobile**
+- [ ] **Step 1: Restyle filters for mobile (preserve URL state)**
 
-Replace `src/components/feed/feed-filters.tsx` with a responsive design:
-- On desktop: horizontal pill row (current behavior but styled with design tokens)
-- On mobile: horizontal scroll with fade indicators
-- Active state uses accent color
-- Use `scrollbar-hide` for cleaner mobile scroll
+IMPORTANT: The existing `feed-filters.tsx` uses `useRouter` and `useSearchParams` for URL-based filter state. This must be preserved — filters stored in URL params are shareable and survive page refreshes. Import categories from `@/types` (the canonical source), don't hardcode them.
 
-```typescript
-"use client";
+Restyle the existing component:
+- Replace hardcoded color classes (`bg-black text-white`, `bg-gray-100`) with design token classes (`bg-foreground text-background`, `bg-muted text-muted-foreground`)
+- Add `scrollbar-hide` class to the filter rows for cleaner mobile scroll
+- Add `aria-pressed` to filter buttons for accessibility
+- Keep the existing `useRouter`/`useSearchParams` state management intact
 
-interface FeedFiltersProps {
-  selectedCategory: string | null;
-  selectedTool: string | null;
-  onCategoryChange: (category: string | null) => void;
-  onToolChange: (tool: string | null) => void;
-}
-
-const CATEGORIES = [
-  "Code Generation", "Code Review", "Testing", "Debugging", "DevOps", "Architecture",
-];
-
-const TOOLS = [
-  "Claude Code", "Cursor", "Copilot", "Windsurf", "Aider", "Cline",
-];
-
-export function FeedFilters({
-  selectedCategory,
-  selectedTool,
-  onCategoryChange,
-  onToolChange,
-}: FeedFiltersProps) {
-  return (
-    <div className="space-y-3 mb-6">
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <FilterPill
-          label="All"
-          active={!selectedCategory}
-          onClick={() => onCategoryChange(null)}
-        />
-        {CATEGORIES.map((cat) => (
-          <FilterPill
-            key={cat}
-            label={cat}
-            active={selectedCategory === cat}
-            onClick={() => onCategoryChange(selectedCategory === cat ? null : cat)}
-          />
-        ))}
-      </div>
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {TOOLS.map((tool) => (
-          <FilterPill
-            key={tool}
-            label={tool}
-            active={selectedTool === tool}
-            onClick={() => onToolChange(selectedTool === tool ? null : tool)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-        active
-          ? "bg-foreground text-background"
-          : "bg-muted text-muted-foreground hover:bg-border"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-```
-
-- [ ] **Step 2: Add scrollbar-hide utility to globals.css**
-
-Add to `src/app/globals.css`:
-
-```css
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-```
-
-- [ ] **Step 3: Verify on mobile viewport (375px)**
+- [ ] **Step 2: Verify on mobile viewport (375px)**
 
 Use browser devtools to test at 375px width. Filters should scroll horizontally.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/components/feed/feed-filters.tsx src/app/globals.css
-git commit -m "feat: mobile-responsive feed filters with scrollbar-hide"
+git add src/components/feed/feed-filters.tsx
+git commit -m "feat: mobile-responsive feed filters with design tokens"
 ```
 
 ---
@@ -1019,15 +953,11 @@ git commit -m "feat: add SEO metadata, sitemap, and RSS feed"
 - Create: `src/app/api/og/route.tsx`
 - Modify: `package.json` (add @vercel/og)
 
-- [ ] **Step 1: Install @vercel/og**
-
-Run: `npm install @vercel/og`
-
-- [ ] **Step 2: Create OG image route**
+- [ ] **Step 1: Create OG image route (uses built-in next/og, no extra dependency needed)**
 
 ```typescript
 // src/app/api/og/route.tsx
-import { ImageResponse } from "@vercel/og";
+import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 
 export const runtime = "edge";
@@ -1130,8 +1060,8 @@ Use a social card validator to check the OG image renders correctly for a sample
 - [ ] **Step 5: Commit**
 
 ```bash
-git add package.json package-lock.json src/app/api/og/route.tsx
-git commit -m "feat: add dynamic OG image generation via @vercel/og"
+git add src/app/api/og/route.tsx
+git commit -m "feat: add dynamic OG image generation via next/og"
 ```
 
 ---
@@ -1270,22 +1200,191 @@ git commit -m "feat: accessibility and performance improvements"
 
 ---
 
+## Task 14: Dark Mode for UI Primitives (Badge, Button, FeedSummary)
+
+**Files:**
+- Modify: `src/components/ui/badge.tsx`
+- Modify: `src/components/ui/button.tsx`
+- Modify: `src/components/feed/feed-summary.tsx`
+
+**Context:** The current Badge uses hardcoded light-mode colors (`bg-blue-100 text-blue-800`, etc.). Button uses `bg-black`, `bg-gray-100`. FeedSummary uses `bg-blue-50`. All need dark mode support. Use Tailwind's `dark:` variant (configured via the `@variant dark` block in globals.css).
+
+- [ ] **Step 1: Update Badge with dark mode variants**
+
+For each variant in `src/components/ui/badge.tsx`, add dark: counterparts:
+- `default`: add `dark:bg-zinc-800 dark:text-zinc-300`
+- `tip`: add `dark:bg-blue-900/50 dark:text-blue-300`
+- `comparison`: add `dark:bg-purple-900/50 dark:text-purple-300`
+- `guide`: add `dark:bg-green-900/50 dark:text-green-300`
+- `breaking`: add `dark:bg-red-900/50 dark:text-red-300`
+- `draft`: add `dark:bg-yellow-900/50 dark:text-yellow-300`
+- `verified`: add `dark:bg-emerald-900/50 dark:text-emerald-300`
+- `superseded`: add `dark:bg-zinc-800 dark:text-zinc-500`
+
+- [ ] **Step 2: Update Button with dark mode variants**
+
+In `src/components/ui/button.tsx`, update variants:
+- `primary`: `bg-foreground text-background hover:opacity-90` (uses CSS vars, works in both modes)
+- `secondary`: `bg-muted text-foreground hover:bg-border` (uses CSS vars)
+- `danger`: keep `bg-red-600 text-white` (works in both modes)
+- `ghost`: `text-muted-foreground hover:bg-muted` (uses CSS vars)
+
+- [ ] **Step 3: Update FeedSummary with dark mode**
+
+Replace hardcoded `border-blue-200 bg-blue-50 text-blue-900` with:
+`border-accent/20 bg-accent/5 text-foreground`
+
+- [ ] **Step 4: Verify dark mode toggle with all components**
+
+Toggle dark mode and verify Badge, Button, and FeedSummary all look correct.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/components/ui/badge.tsx src/components/ui/button.tsx src/components/feed/feed-summary.tsx
+git commit -m "feat: add dark mode support to Badge, Button, and FeedSummary"
+```
+
+---
+
+## Task 15: Related Entries Component
+
+**Files:**
+- Create: `src/components/entry/related-entries.tsx`
+- Modify: `src/app/entry/[slug]/page.tsx`
+
+**Context:** Spec Section 3.5 requires a related entries section on the entry detail page. Show entries that share the same tools or categories, excluding the current entry.
+
+- [ ] **Step 1: Create related entries component**
+
+```typescript
+// src/components/entry/related-entries.tsx
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { db } from "@/lib/db";
+import { entries } from "@/lib/db/schema";
+import { eq, and, ne, desc } from "drizzle-orm";
+import { sql } from "drizzle-orm";
+
+interface RelatedEntriesProps {
+  currentEntryId: string;
+  tools: string[];
+  categories: string[];
+}
+
+export async function RelatedEntries({ currentEntryId, tools, categories }: RelatedEntriesProps) {
+  // Find entries that share tools or categories with the current entry
+  const related = await db
+    .select({ id: entries.id, slug: entries.slug, title: entries.title, type: entries.type, tools: entries.tools })
+    .from(entries)
+    .where(
+      and(
+        eq(entries.status, "active"),
+        eq(entries.confidence, "verified"),
+        ne(entries.id, currentEntryId)
+      )
+    )
+    .orderBy(desc(entries.publishedAt))
+    .limit(20);
+
+  // Score by overlap
+  const scored = related
+    .map((entry) => {
+      const toolOverlap = entry.tools.filter((t) => tools.includes(t)).length;
+      const score = toolOverlap;
+      return { ...entry, score };
+    })
+    .filter((e) => e.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  if (scored.length === 0) return null;
+
+  return (
+    <div className="mt-8 pt-6 border-t border-border">
+      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
+        Related
+      </h3>
+      <div className="space-y-2">
+        {scored.map((entry) => (
+          <Link
+            key={entry.id}
+            href={`/entry/${entry.slug}`}
+            className="block rounded-lg p-3 hover:bg-muted transition-colors"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant={entry.type as any}>{entry.type}</Badge>
+            </div>
+            <p className="text-sm font-medium text-card-foreground">{entry.title}</p>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Add RelatedEntries to entry detail page**
+
+Import and render `<RelatedEntries currentEntryId={entry.id} tools={entry.tools} categories={entry.categories} />` below the entry body in `src/app/entry/[slug]/page.tsx`.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/components/entry/related-entries.tsx src/app/entry/[slug]/page.tsx
+git commit -m "feat: add related entries section to entry detail page"
+```
+
+---
+
+## Task 16: Admin UI Tightening
+
+**Files:**
+- Modify: `src/app/admin/layout.tsx`
+
+**Context:** Spec Section 3.6 requires the admin UI to feel functional and professional. The current admin layout has basic styling. Tighten spacing, use design tokens for colors, and improve the nav.
+
+- [ ] **Step 1: Update admin layout with design tokens**
+
+In `src/app/admin/layout.tsx`:
+- Replace `bg-gray-50` with `bg-muted`
+- Replace hardcoded gray nav text colors with `text-muted-foreground` / `text-foreground`
+- Add active nav link highlighting based on current path
+- Use `font-heading` for the admin title
+- Add `dark:` variants for the admin background and nav
+
+- [ ] **Step 2: Verify admin pages in both light and dark mode**
+
+Check `/admin/queue`, `/admin/sources`, `/admin/settings` — all should have consistent styling.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/app/admin/layout.tsx
+git commit -m "feat: tighten admin UI with design tokens and dark mode"
+```
+
+---
+
 ## Summary
 
 | Task | What | Spec Section |
 |------|------|-------------|
 | 1 | Rename to "Coding Radar" | 3.1 |
-| 2 | Design system — colors, fonts, dark mode tokens | 3.1 |
+| 2 | Design system — colors, fonts, dark mode tokens (Tailwind v4 CSS-first) | 3.1 |
 | 3 | Logo and site header | 3.1 |
 | 4 | Relative time utility | 3.2 |
 | 5 | Unified clickable entry card | 3.2, 3.3 |
-| 6 | Mobile-responsive filters | 3.4 |
+| 6 | Mobile-responsive filters (preserve URL state) | 3.4 |
 | 7 | Entry detail page redesign | 3.5 |
-| 8 | Dark mode toggle | 3.7 |
+| 8 | Dark mode toggle (with anti-FOUC script) | 3.7 |
 | 9 | About page | 4.1 |
 | 10 | SEO, sitemap, RSS feed | 4.2 |
-| 11 | Dynamic OG images | 4.3 |
+| 11 | Dynamic OG images (next/og) | 4.3 |
 | 12 | Feed stats and trust signals | 4.4 |
 | 13 | Performance and accessibility | 4.5 |
+| 14 | Dark mode for Badge, Button, FeedSummary | 3.7 |
+| 15 | Related entries component | 3.5 |
+| 16 | Admin UI tightening | 3.6 |
 
 **After completing this plan:** Proceed to Plan C (Launch Prep) which covers error monitoring, content buffer, edge case QA, analytics, and the final launch checklist.
