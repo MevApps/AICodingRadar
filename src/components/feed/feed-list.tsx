@@ -64,6 +64,25 @@ export function FeedList() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [nextCursor, loading, fetchEntries]);
 
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground text-sm">Loading entries...</p>
+      </div>
+    );
+  }
+
+  if (!loading && entries.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground text-lg mb-2">No entries yet</p>
+        <p className="text-muted-foreground text-sm">
+          Try adjusting your filters or check back soon.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <AnimatePresence>
@@ -79,10 +98,6 @@ export function FeedList() {
           </motion.div>
         ))}
       </AnimatePresence>
-
-      {loading && (
-        <div className="py-8 text-center text-sm text-gray-500">Loading...</div>
-      )}
 
       {!loading && !nextCursor && entries.length > 0 && (
         <div className="py-8 text-center text-sm text-gray-500">
