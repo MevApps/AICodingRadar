@@ -6,8 +6,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AI Coding Radar",
-  description: "Stay sharp on AI coding tools — aggregated, structured, evergreen",
+  title: "Coding Radar",
+  description: "Stay sharp on AI coding tools — curated, structured, evergreen.",
 };
 
 export default function RootLayout({

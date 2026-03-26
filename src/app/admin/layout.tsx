@@ -11,7 +11,7 @@ export default function AdminLayout({
       <nav className="border-b bg-white px-6 py-3">
         <div className="mx-auto flex max-w-5xl items-center gap-6">
           <Link href="/admin/queue" className="text-sm font-semibold">
-            AI Coding Radar Admin
+            Coding Radar Admin
           </Link>
           <Link href="/admin/queue" className="text-sm text-gray-600 hover:text-black">
             Review Queue

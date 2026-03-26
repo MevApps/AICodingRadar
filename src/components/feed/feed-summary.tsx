@@ -6,9 +6,9 @@ export function FeedSummary() {
   const [summary, setSummary] = useState<string | null>(null);
 
   useEffect(() => {
-    const lastSeen = localStorage.getItem("ai-radar-last-seen");
+    const lastSeen = localStorage.getItem("coding-radar-last-seen");
     if (!lastSeen) {
-      localStorage.setItem("ai-radar-last-seen", new Date().toISOString());
+      localStorage.setItem("coding-radar-last-seen", new Date().toISOString());
       return;
     }
 
@@ -21,7 +21,7 @@ export function FeedSummary() {
       })
       .catch(() => {});
 
-    localStorage.setItem("ai-radar-last-seen", new Date().toISOString());
+    localStorage.setItem("coding-radar-last-seen", new Date().toISOString());
   }, []);
 
   if (!summary) return null;

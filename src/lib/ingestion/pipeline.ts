@@ -60,6 +60,15 @@ export async function processSource(
   // 1. Crawl
   const crawler = getCrawler(source.type);
   const crawlResult = await crawler.crawl(source.url);
+
+  // 1.5. Date cutoff — only process items from the last 7 days
+  const maxAgeDays = parseInt(process.env.CRAWL_MAX_AGE_DAYS ?? "7", 10);
+  const cutoffDate = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
+  crawlResult.items = crawlResult.items.filter((item) => {
+    if (!item.publishedAt) return true; // Keep items with no date (can't filter)
+    return item.publishedAt >= cutoffDate;
+  });
+
   result.crawled = crawlResult.items.length;
   result.errors.push(...crawlResult.errors);
 

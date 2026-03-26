@@ -136,11 +136,35 @@
     "categories": ["Code Generation", "Architecture"]
   },
   {
-    "url": "https://buttondown.com/ainews/rss",
+    "url": "https://news.smol.ai/rss.xml",
     "type": "rss",
-    "name": "AI News Newsletter",
-    "description": "Daily AI news aggregation with developer focus",
+    "name": "AI News (smol.ai)",
+    "description": "Weekday recaps of top AI engineering news from Twitter, Reddit, and Discord",
     "tools": ["Claude Code", "Cursor", "Copilot"],
-    "categories": ["Code Generation", "Testing", "DevOps"]
+    "categories": ["Code Generation", "Architecture", "DevOps"]
+  },
+  {
+    "url": "https://www.reddit.com/r/singularity",
+    "type": "reddit",
+    "name": "r/singularity",
+    "description": "AI breakthroughs and frontier model developments",
+    "tools": ["Claude Code", "Copilot", "ChatGPT"],
+    "categories": ["Code Generation", "Architecture"]
+  },
+  {
+    "url": "https://blog.google/technology/ai/rss",
+    "type": "rss",
+    "name": "Google AI Blog",
+    "description": "Google AI product launches including Gemini and AI Studio",
+    "tools": ["Gemini"],
+    "categories": ["Code Generation", "Architecture"]
+  },
+  {
+    "url": "https://github.com/continuedev/continue",
+    "type": "github",
+    "name": "Continue Releases",
+    "description": "Continue AI coding assistant for VS Code and JetBrains",
+    "tools": ["Continue"],
+    "categories": ["Code Generation", "Code Review"]
   }
 ]
